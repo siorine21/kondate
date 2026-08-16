@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>献立アプリ 画面イメージ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F1F3EE;
+  --card:#FFFFFF;
+  --ink:#171C1A;
+  --ink-2:#5A635F;
+  --ink-3:#909791;
+  --line:#DEE2D9;
+  --ai:#2C4A54;
+  --ai-soft:#E7EDEE;
+  --yuzu:#C08A24;
+  --meat:#A85751;
+  --fish:#3F7391;
+  --egg:#C08A24;
+  --soy:#6E8B5A;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"Zen Kaku Gothic New",system-ui,sans-serif;
+  background:var(--paper);color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{display:flex;min-height:100vh}
+
+/* ---------- sidebar ---------- */
+.rail{
+  width:262px;flex-shrink:0;padding:34px 22px;
+  border-right:1px solid var(--line);position:sticky;top:0;height:100vh;
+  overflow-y:auto;
+}
+.brand{font-family:"Shippori Mincho B1",serif;font-size:23px;font-weight:700;letter-spacing:.04em;line-height:1.3}
+.brand span{display:block;font-family:"Roboto Mono",monospace;font-size:9.5px;letter-spacing:.22em;color:var(--ink-3);margin-top:8px;font-weight:400}
+.rail h4{font-family:"Roboto Mono",monospace;font-size:9.5px;letter-spacing:.18em;color:var(--ink-3);font-weight:500;margin:34px 0 10px}
+.navbtn{
+  display:flex;align-items:baseline;gap:11px;width:100%;text-align:left;
+  background:none;border:0;font:inherit;color:var(--ink-2);cursor:pointer;
+  padding:9px 11px;border-radius:9px;font-size:13.5px;transition:.15s;
+}
+.navbtn em{font-family:"Roboto Mono",monospace;font-style:normal;font-size:10px;color:var(--ink-3);width:16px}
+.navbtn:hover{background:#E7EAE3;color:var(--ink)}
+.navbtn.on{background:var(--ai);color:#fff}
+.navbtn.on em{color:#93AEB4}
+.railnote{margin-top:28px;font-size:11.5px;line-height:1.85;color:var(--ink-3);border-top:1px solid var(--line);padding-top:18px}
+
+/* ---------- stage ---------- */
+.stage{flex:1;padding:52px 40px 80px;display:flex;flex-direction:column;align-items:center;gap:26px}
+.caption{max-width:430px;text-align:center}
+.caption h2{font-family:"Shippori Mincho B1",serif;font-size:21px;font-weight:700;letter-spacing:.02em}
+.caption p{font-size:12.5px;color:var(--ink-2);line-height:1.85;margin-top:9px}
+
+.phone{
+  width:390px;height:790px;background:var(--card);border-radius:34px;
+  border:1px solid var(--line);box-shadow:0 24px 60px -22px rgba(23,28,26,.28);
+  overflow:hidden;display:flex;flex-direction:column;position:relative;
+}
+.status{
+  height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;font-family:"Roboto Mono",monospace;font-size:10px;color:var(--ink-3);
+}
+.scroll{flex:1;overflow-y:auto;padding:0 20px 26px}
+.scroll::-webkit-scrollbar{width:0}
+.screen{display:none}
+.screen.on{display:block}
+
+/* ---------- shared UI ---------- */
+.hd{padding:6px 0 18px}
+.eyebrow{font-family:"Roboto Mono",monospace;font-size:9.5px;letter-spacing:.2em;color:var(--ink-3)}
+.hd h1{font-family:"Shippori Mincho B1",serif;font-size:24px;font-weight:700;margin-top:7px;letter-spacing:.02em}
+.hd p{font-size:12px;color:var(--ink-2);margin-top:6px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.btn{
+  display:block;width:100%;padding:14px;border:0;border-radius:11px;background:var(--ai);
+  color:#fff;font:inherit;font-size:14px;font-weight:500;cursor:pointer;letter-spacing:.03em;
+}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--ink)}
+.btn.sm{padding:9px;font-size:12.5px;border-radius:9px}
+.row{display:flex;gap:9px}
+.field{margin-bottom:13px}
+.field label{display:block;font-family:"Roboto Mono",monospace;font-size:9.5px;letter-spacing:.14em;color:var(--ink-3);margin-bottom:6px}
+.field input,.field textarea{
+  width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:10px;
+  font:inherit;font-size:14px;background:#FAFBF8;color:var(--ink);
+}
+.field textarea{resize:none;line-height:1.75}
+
+/* protein ribbon — signature */
+.ribbon{display:flex;height:5px;border-radius:3px;overflow:hidden;margin:2px 0 16px}
+.ribbon i{flex:1}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.m-meat{background:var(--meat)}.m-fish{background:var(--fish)}
+.m-egg{background:var(--egg)}.m-soy{background:var(--soy)}
+
+.tag{
+  display:inline-block;font-family:"Roboto Mono",monospace;font-size:9.5px;letter-spacing:.1em;
+  padding:3px 8px;border-radius:5px;background:#EDF0EA;color:var(--ink-2);
+}
+.tag.ai{background:var(--ai-soft);color:var(--ai)}
+.tag.warn{background:#F6ECD9;color:#8A6212}
+
+/* today */
+.dishline{display:flex;gap:13px;padding:15px 0;border-bottom:1px solid var(--line)}
+.dishline:last-child{border:0;padding-bottom:0}
+.dishrole{font-family:"Roboto Mono",monospace;font-size:9.5px;color:var(--ink-3);width:34px;flex-shrink:0;padding-top:4px;letter-spacing:.08em}
+.dishname{font-size:15.5px;font-weight:500;line-height:1.5}
+.dishmeta{font-size:11px;color:var(--ink-3);margin-top:5px;display:flex;gap:9px;align-items:center}
+
+/* week */
+.day{display:flex;gap:0;background:var(--card);border:1px solid var(--line);border-radius:11px;margin-bottom:8px;overflow:hidden}
+.spine{width:4px;flex-shrink:0}
+.daybody{padding:12px 13px;flex:1;min-width:0}
+.daytop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.daydate{font-family:"Roboto Mono",monospace;font-size:10.5px;color:var(--ink-3);letter-spacing:.06em}
+.daydish{font-size:14.5px;font-weight:500;margin-top:5px}
+.daysub{font-size:11px;color:var(--ink-3);margin-top:4px}
+
+/* radar + bars */
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;margin-top:14px}
+.legend div{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink-2)}
+.legend b{margin-left:auto;font-family:"Roboto Mono",monospace;font-size:11px;color:var(--ink);font-weight:500}
+.segbar{display:flex;height:26px;border-radius:7px;overflow:hidden;margin:12px 0 9px}
+.segbar i{display:flex;align-items:center;justify-content:center;font-family:"Roboto Mono",monospace;font-size:10px;color:#fff}
+.goal{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.goal:last-child{border:0}
+.goal span{color:var(--ink-2)}
+.ok{font-family:"Roboto Mono",monospace;font-size:11.5px;color:var(--soy)}
+.ng{font-family:"Roboto Mono",monospace;font-size:11.5px;color:var(--meat)}
+
+/* shopping */
+.shopcat{font-family:"Roboto Mono",monospace;font-size:9.5px;letter-spacing:.18em;color:var(--ink-3);margin:20px 0 6px;display:flex;align-items:center;gap:9px}
+.shopcat:after{content:"";flex:1;height:1px;background:var(--line)}
+.item{display:flex;align-items:center;gap:11px;padding:11px 2px;border-bottom:1px solid #EFF1EC;font-size:14px}
+.box{width:18px;height:18px;border:1.5px solid var(--line);border-radius:5px;flex-shrink:0}
+.box.done{background:var(--ai);border-color:var(--ai);position:relative}
+.box.done:after{content:"";position:absolute;left:5.5px;top:2px;width:4px;height:9px;border:solid #fff;border-width:0 1.7px 1.7px 0;transform:rotate(43deg)}
+.item.done{color:var(--ink-3);text-decoration:line-through}
+.qty{margin-left:auto;font-family:"Roboto Mono",monospace;font-size:11.5px;color:var(--ink-3)}
+.who{font-family:"Roboto Mono",monospace;font-size:9px;color:var(--ink-3);background:#EDF0EA;padding:2px 5px;border-radius:4px}
+
+/* request chips */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.chip{padding:8px 13px;border:1px solid var(--line);border-radius:20px;font-size:12.5px;color:var(--ink-2);background:var(--card);cursor:pointer}
+.chip.on{background:var(--ai);border-color:var(--ai);color:#fff}
+
+/* recipe list */
+.rec{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.rec .sq{width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:"Roboto Mono",monospace;font-size:10px;color:#fff}
+.recname{font-size:14.5px;font-weight:500}
+.recmeta{font-size:10.5px;color:var(--ink-3);margin-top:3px}
+
+/* tabbar */
+.tabbar{
+  flex-shrink:0;border-top:1px solid var(--line);display:flex;background:var(--card);
+  padding:9px 6px 14px;
+}
+.tabbar button{flex:1;background:none;border:0;font:inherit;font-size:10px;color:var(--ink-3);cursor:pointer;padding:5px 0;letter-spacing:.02em}
+.tabbar button.on{color:var(--ai);font-weight:700}
+.tabbar em{display:block;font-size:15px;font-style:normal;margin-bottom:4px}
+
+.note{font-size:11.5px;color:var(--ink-2);line-height:1.8;background:#EDF0EA;padding:12px 13px;border-radius:10px;margin-top:14px}
+
+/* tappable */
+[data-recipe]{cursor:pointer;transition:.14s}
+.dishline[data-recipe]{align-items:center}
+.dishline[data-recipe]:hover .dishname{color:var(--ai)}
+.day[data-recipe]:hover{border-color:#B6C3BC;transform:translateX(2px)}
+.rec[data-recipe]:hover .recname{color:var(--ai)}
+.chev{margin-left:auto;color:var(--line);font-size:17px;flex-shrink:0;padding-left:8px}
+.back{
+  display:inline-flex;align-items:center;gap:7px;background:none;border:0;font:inherit;
+  font-family:"Roboto Mono",monospace;font-size:10px;letter-spacing:.14em;color:var(--ink-3);
+  cursor:pointer;padding:10px 0 4px;
+}
+.back:hover{color:var(--ai)}
+.ing{display:flex;align-items:center;padding:11px 2px;font-size:14px;border-bottom:1px solid #EFF1EC}
+.ing:last-child{border:0}
+.step{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px;line-height:1.95}
+.step:last-child{border:0}
+.step i{font-family:"Roboto Mono",monospace;font-size:11px;color:var(--ai);font-style:normal;padding-top:3px;flex-shrink:0}
+
+@media(max-width:900px){
+  .wrap{flex-direction:column}
+  .rail{width:100%;height:auto;position:static;border-right:0;border-bottom:1px solid var(--line);padding:22px}
+  .rail h4{margin-top:20px}
+  .navwrap{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+  .navbtn{white-space:nowrap;width:auto}
+  .railnote{display:none}
+  .stage{padding:30px 14px 60px}
+  .phone{width:100%;max-width:390px;height:720px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="rail">
+  <div class="brand">献立<span>KONDATE · WEEKLY DINNER PLANNER</span></div>
+  <h4>SCREENS</h4>
+  <div class="navwrap" id="nav"></div>
+  <p class="railnote">画面は実データ想定のダミーです。青緑＝藍の器、帯の色は主菜のたんぱく源を表します。</p>
+</nav>
+
+<main class="stage">
+  <div class="caption" id="caption"></div>
+
+  <div class="phone">
+    <div class="status"><span>9:41</span><span>●●● ⌁ 100%</span></div>
+    <div class="scroll" id="scroll">
+
+<!-- 1 ログイン -->
+<section class="screen" data-s="login">
+  <div style="padding:110px 4px 0;text-align:center">
+    <div style="font-family:'Shippori Mincho B1',serif;font-size:38px;font-weight:700;letter-spacing:.08em">献立</div>
+    <div style="font-family:'Roboto Mono',monospace;font-size:9.5px;letter-spacing:.24em;color:var(--ink-3);margin-top:12px">KONDATE</div>
+  </div>
+  <div style="margin-top:56px">
+    <div class="field"><label>MAIL</label><input value="yuki@example.com"></div>
+    <div class="field"><label>PASSWORD</label><input type="password" value="••••••••••"></div>
+    <button class="btn" style="margin-top:8px">ログイン</button>
+  </div>
+  <p style="text-align:center;font-size:11.5px;color:var(--ink-3);margin-top:26px;line-height:1.9">
+    このアプリは招待された2名のみが利用できます。<br>新規登録の受付は行っていません。
+  </p>
+  <div class="note">実装：Supabase Auth のサインアップを無効化。全テーブルに RLS を設定し、世帯外のデータは DB レベルで遮断する。</div>
+</section>
+
+<!-- 2 ホーム -->
+<section class="screen" data-s="home">
+  <div class="hd">
+    <div class="eyebrow">8月17日 月曜日</div>
+    <h1>今日の献立</h1>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <span class="dot m-meat"></span>
+      <span style="font-size:11px;color:var(--ink-3)">主菜のたんぱく源：肉</span>
+      <span class="tag" style="margin-left:auto">中華</span>
+    </div>
+    <div class="dishline" data-recipe="amazu">
+      <div class="dishrole">主菜</div>
+      <div><div class="dishname">鶏むね肉の甘酢炒め</div>
+      <div class="dishmeta"><span>15分</span><span>·</span><span>フライパン</span></div></div>
+      <span class="chev">›</span>
+    </div>
+    <div class="dishline" data-recipe="ohitashi">
+      <div class="dishrole">副菜</div>
+      <div><div class="dishname">小松菜とにんじんのおひたし</div>
+      <div class="dishmeta"><span>7分</span><span>·</span><span>作りおき可</span></div></div>
+      <span class="chev">›</span>
+    </div>
+    <div class="dishline" data-recipe="misoshiru">
+      <div class="dishrole">汁物</div>
+      <div><div class="dishname">豆腐とわかめの味噌汁</div>
+      <div class="dishmeta"><span>8分</span></div></div>
+      <span class="chev">›</span>
+    </div>
+  </div>
+  <div class="row" style="margin-top:12px">
+    <button class="btn sm ghost">作り方を見る</button>
+    <button class="btn sm ghost">この日を差し替え</button>
+  </div>
+
+  <div style="margin-top:26px">
+    <div class="eyebrow">TOMORROW / 明日の下ごしらえ</div>
+    <div class="card" data-recipe="chanchan" style="margin-top:9px;display:flex;gap:12px;align-items:center">
+      <span class="dot m-fish" style="width:9px;height:9px"></span>
+      <div><div style="font-size:14.5px;font-weight:500">鮭のちゃんちゃん焼き</div>
+      <div style="font-size:11px;color:var(--ink-3);margin-top:4px">鮭は今夜のうちに冷蔵庫へ移す</div></div>
+      <span class="chev">›</span>
+    </div>
+  </div>
+
+  <div style="margin-top:26px">
+    <div class="eyebrow">SHOPPING / 買い物</div>
+    <div class="card" style="margin-top:9px;display:flex;align-items:center">
+      <div><div style="font-size:14.5px;font-weight:500">未購入 6 品</div>
+      <div style="font-size:11px;color:var(--ink-3);margin-top:4px">青果 3 ・ 精肉 1 ・ 乳卵 2</div></div>
+      <span style="margin-left:auto;color:var(--ink-3);font-size:18px">›</span>
+    </div>
+  </div>
+</section>
+
+<!-- 3 週間献立 -->
+<section class="screen" data-s="week">
+  <div class="hd">
+    <div class="eyebrow">8/17 MON — 8/23 SUN</div>
+    <h1>今週の献立</h1>
+    <p>たんぱく源の並びを帯で確認できます</p>
+  </div>
+  <div class="ribbon">
+    <i class="m-meat"></i><i class="m-fish"></i><i class="m-soy"></i>
+    <i class="m-meat"></i><i class="m-meat"></i><i class="m-fish"></i><i class="m-egg"></i>
+  </div>
+  <div id="weeklist"></div>
+  <div class="row" style="margin-top:14px">
+    <button class="btn sm ghost">週を再生成</button>
+    <button class="btn sm">この内容で確定</button>
+  </div>
+  <div class="note">確定すると買い物リストが自動生成されます。🔒 のついた日はリクエストで固定された献立で、再生成しても変わりません。</div>
+</section>
+
+<!-- 4 献立詳細 -->
+<section class="screen" data-s="detail">
+  <button class="back" id="backbtn">‹ &nbsp;もどる</button>
+  <div id="detailbody"></div>
+</section>
+
+<!-- 5 栄養サマリ -->
+<section class="screen" data-s="nutrition">
+  <div class="hd">
+    <div class="eyebrow">WEEK 8/17 — 8/23</div>
+    <h1>今週の栄養</h1>
+    <p>7食を1つの単位として評価しています</p>
+  </div>
+
+  <div class="card" style="text-align:center;padding:20px 16px 16px">
+    <svg viewBox="0 0 220 220" style="width:220px;height:220px">
+      <polygon points="110,30 179.3,70 179.3,150 110,190 40.7,150 40.7,70" fill="none" stroke="#E4E8DF" stroke-width="1"/>
+      <polygon points="110,70 144.6,90 144.6,130 110,150 75.4,130 75.4,90" fill="none" stroke="#E4E8DF" stroke-width="1"/>
+      <line x1="110" y1="110" x2="110" y2="30" stroke="#E4E8DF"/><line x1="110" y1="110" x2="179.3" y2="70" stroke="#E4E8DF"/>
+      <line x1="110" y1="110" x2="179.3" y2="150" stroke="#E4E8DF"/><line x1="110" y1="110" x2="110" y2="190" stroke="#E4E8DF"/>
+      <line x1="110" y1="110" x2="40.7" y2="150" stroke="#E4E8DF"/><line x1="110" y1="110" x2="40.7" y2="70" stroke="#E4E8DF"/>
+      <polygon points="110,30 151.6,86 175.8,148 110,178 40.7,150 61.5,82"
+        fill="rgba(44,74,84,.14)" stroke="#2C4A54" stroke-width="1.8" stroke-linejoin="round"/>
+      <circle cx="110" cy="30" r="3" fill="#2C4A54"/><circle cx="151.6" cy="86" r="3" fill="#2C4A54"/>
+      <circle cx="175.8" cy="148" r="3" fill="#2C4A54"/><circle cx="110" cy="178" r="3" fill="#2C4A54"/>
+      <circle cx="40.7" cy="150" r="3" fill="#2C4A54"/><circle cx="61.5" cy="82" r="3" fill="#2C4A54"/>
+    </svg>
+    <div class="legend" style="text-align:left">
+      <div><span class="dot" style="background:var(--ai)"></span>1群 魚肉卵豆<b>100%</b></div>
+      <div><span class="dot" style="background:var(--ai)"></span>2群 乳・小魚<b>60%</b></div>
+      <div><span class="dot" style="background:var(--ai)"></span>3群 緑黄色野菜<b>95%</b></div>
+      <div><span class="dot" style="background:var(--ai)"></span>4群 淡色野菜<b>85%</b></div>
+      <div><span class="dot" style="background:var(--ai)"></span>5群 穀類・いも<b>100%</b></div>
+      <div><span class="dot" style="background:var(--ai)"></span>6群 油脂<b>70%</b></div>
+    </div>
+  </div>
+
+  <div class="eyebrow" style="margin-top:24px">CATEGORY / 和洋中の配分</div>
+  <div class="segbar">
+    <i style="flex:4;background:#2C4A54">和 4</i>
+    <i style="flex:2;background:#527A85">中 2</i>
+    <i style="flex:1;background:#8FAEB5">洋 1</i>
+  </div>
+
+  <div class="eyebrow" style="margin-top:24px">WEEKLY GOALS</div>
+  <div class="card" style="margin-top:9px">
+    <div class="goal"><span>魚を週2回以上</span><span class="ok">2回 ✓</span></div>
+    <div class="goal"><span>大豆製品を週2回以上</span><span class="ok">3回 ✓</span></div>
+    <div class="goal"><span>緑黄色野菜を毎日</span><span class="ok">7日 ✓</span></div>
+    <div class="goal"><span>揚げ物の連日なし</span><span class="ok">✓</span></div>
+    <div class="goal"><span>乳製品を週3回以上</span><span class="ng">1回 · あと2回</span></div>
+  </div>
+  <div class="note">未達の項目は、次回の週生成時に自動で優先されます。数値目標ではなく「食品群の充足度」で管理するため、食材の重量入力は不要です。</div>
+</section>
+
+<!-- 6 買い物リスト -->
+<section class="screen" data-s="shopping">
+  <div class="hd">
+    <div class="eyebrow">8/17 — 8/23 · 売り場順</div>
+    <h1>買い物リスト</h1>
+    <p>18品中 12品 購入済み · 2人で同時に消せます</p>
+  </div>
+
+  <div class="shopcat">青果</div>
+  <div class="item"><span class="box"></span>玉ねぎ<span class="qty">3 個</span></div>
+  <div class="item"><span class="box"></span>ピーマン<span class="qty">6 個</span></div>
+  <div class="item done"><span class="box done"></span>小松菜<span class="who">妻</span><span class="qty">2 束</span></div>
+  <div class="item done"><span class="box done"></span>にんじん<span class="who">妻</span><span class="qty">2 本</span></div>
+
+  <div class="shopcat">精肉</div>
+  <div class="item"><span class="box"></span>鶏むね肉<span class="qty">500 g</span></div>
+  <div class="item done"><span class="box done"></span>豚こま切れ<span class="who">夫</span><span class="qty">300 g</span></div>
+  <div class="item done"><span class="box done"></span>合いびき肉<span class="who">夫</span><span class="qty">300 g</span></div>
+
+  <div class="shopcat">鮮魚</div>
+  <div class="item done"><span class="box done"></span>生鮭<span class="who">妻</span><span class="qty">2 切</span></div>
+  <div class="item done"><span class="box done"></span>あじ<span class="who">妻</span><span class="qty">4 尾</span></div>
+
+  <div class="shopcat">豆腐・練物</div>
+  <div class="item"><span class="box"></span>木綿豆腐<span class="qty">2 丁</span></div>
+  <div class="item done"><span class="box done"></span>絹豆腐<span class="who">妻</span><span class="qty">1 丁</span></div>
+
+  <div class="shopcat">乳・卵</div>
+  <div class="item"><span class="box"></span>卵<span class="qty">1 パック</span></div>
+  <div class="item"><span class="box"></span>牛乳<span class="qty">1 L</span></div>
+
+  <div class="note">同じ食材は自動で合算されます（鶏むね肉 250g × 2品 → 500g）。調味料は在庫扱いのため、設定で表示を切り替えられます。</div>
+</section>
+
+<!-- 7 リクエスト -->
+<section class="screen" data-s="request">
+  <div class="hd">
+    <div class="eyebrow">REQUEST</div>
+    <h1>今週のリクエスト</h1>
+    <p>入力した内容を反映して週を組み直します</p>
+  </div>
+
+  <div class="field">
+    <label>やりたいこと</label>
+    <textarea rows="4">金曜はカレーが食べたい。水曜は帰りが遅いので20分以内で。今週はなすを使い切りたい。</textarea>
+  </div>
+
+  <div class="eyebrow" style="margin-top:18px">よく使う条件</div>
+  <div class="chips">
+    <span class="chip on">魚を多めに</span><span class="chip">揚げ物なし</span>
+    <span class="chip on">時短week</span><span class="chip">作りおき多め</span>
+    <span class="chip">がっつり</span><span class="chip">あっさり</span>
+  </div>
+
+  <div class="eyebrow" style="margin-top:22px">曜日ごとの調理時間</div>
+  <div class="card" style="margin-top:9px">
+    <div class="goal"><span>月〜金</span><span class="ok">30分以内</span></div>
+    <div class="goal"><span>土・日</span><span class="ok">制限なし</span></div>
+  </div>
+
+  <div class="eyebrow" style="margin-top:22px">この日は自炊しない</div>
+  <div class="chips">
+    <span class="chip">外食</span><span class="chip on">作りおき</span><span class="chip">残り物</span>
+  </div>
+
+  <button class="btn" style="margin-top:24px">この条件で週を組み直す</button>
+  <div class="note">自由文は AI がタグに変換します（例：「疲れてる」→ 時短・簡単）。変換結果は組み直し前に確認できます。</div>
+</section>
+
+<!-- 8 レシピ管理 -->
+<section class="screen" data-s="recipes">
+  <div class="hd">
+    <div class="eyebrow">RECIPES · 34件</div>
+    <h1>レシピ</h1>
+  </div>
+
+  <div class="field" style="margin-top:4px">
+    <label>品名からレシピを作る</label>
+    <input value="鶏肉のトマト煮込み">
+  </div>
+  <button class="btn sm">AIでレシピを生成</button>
+
+  <div class="eyebrow" style="margin-top:26px">承認待ち · 2件</div>
+  <div class="card" style="margin-top:9px;border-color:#E2D3AE;background:#FCF9F1">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div><div style="font-size:14.5px;font-weight:500">豚肉と厚揚げの味噌炒め</div>
+      <div style="font-size:11px;color:var(--ink-3);margin-top:4px">和 · 主菜 · 20分 · AI生成</div></div>
+      <span class="tag warn" style="margin-left:auto">未確認</span>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn sm ghost">内容を確認</button>
+      <button class="btn sm">承認して使う</button>
+    </div>
+  </div>
+
+  <div class="eyebrow" style="margin-top:26px">登録済み</div>
+  <div class="rec" data-recipe="amazu"><span class="sq m-meat">肉</span><div><div class="recname">鶏むね肉の甘酢炒め</div><div class="recmeta">中 · 主菜 · 15分 · ★★☆</div></div><span class="chev">›</span></div>
+  <div class="rec" data-recipe="chanchan"><span class="sq m-fish">魚</span><div><div class="recname">鮭のちゃんちゃん焼き</div><div class="recmeta">和 · 主菜 · 30分 · ★★★</div></div><span class="chev">›</span></div>
+  <div class="rec" data-recipe="mabo"><span class="sq m-soy">豆</span><div><div class="recname">麻婆豆腐</div><div class="recmeta">中 · 主菜 · 20分 · ★★★</div></div><span class="chev">›</span></div>
+  <div class="rec" data-recipe="soboro"><span class="sq m-egg">卵</span><div><div class="recname">だし巻き卵と鶏そぼろ丼</div><div class="recmeta">和 · 主菜 · 25分 · ★★☆</div></div><span class="chev">›</span></div>
+  <div class="rec" data-recipe="shogayaki" style="border:0"><span class="sq m-meat">肉</span><div><div class="recname">豚肉と夏野菜の生姜焼き</div><div class="recmeta">和 · 主菜 · 20分 · ★★★</div></div><span class="chev">›</span></div>
+
+  <div class="note">AI が生成したレシピは必ず下書きとして保存され、承認するまで献立に使われません。承認後は普通のレシピとして編集・再利用できます。</div>
+</section>
+
+<!-- 9 設定 -->
+<section class="screen" data-s="settings">
+  <div class="hd">
+    <div class="eyebrow">SETTINGS</div>
+    <h1>設定</h1>
+  </div>
+
+  <div class="eyebrow">世帯</div>
+  <div class="card" style="margin-top:9px">
+    <div class="goal"><span>人数</span><span class="ok">大人2人</span></div>
+    <div class="goal"><span>メンバー</span><span class="ok">ユーキ · 妻</span></div>
+    <div class="goal"><span>新規メンバーの追加</span><span class="ng">停止中</span></div>
+  </div>
+
+  <div class="eyebrow" style="margin-top:22px">食の条件</div>
+  <div class="card" style="margin-top:9px">
+    <div class="goal"><span>アレルギー</span><span class="ok">なし</span></div>
+    <div class="goal"><span>苦手な食材</span><span class="ok">パクチー · セロリ</span></div>
+    <div class="goal"><span>もう作らない料理</span><span class="ok">3件</span></div>
+  </div>
+
+  <div class="eyebrow" style="margin-top:22px">献立の方針</div>
+  <div class="card" style="margin-top:9px">
+    <div class="goal"><span>同じ主菜を空ける日数</span><span class="ok">14日</span></div>
+    <div class="goal"><span>和洋中の比率</span><span class="ok">4 : 1 : 2</span></div>
+    <div class="goal"><span>買い物リストに調味料を含める</span><span class="ng">含めない</span></div>
+    <div class="goal"><span>週の自動生成</span><span class="ok">毎週金曜 18:00</span></div>
+  </div>
+
+  <button class="btn ghost" style="margin-top:24px">ログアウト</button>
+</section>
+
+    </div>
+
+    <div class="tabbar" id="tabbar">
+      <button data-go="home" class="on"><em>◉</em>今日</button>
+      <button data-go="week"><em>▤</em>週間</button>
+      <button data-go="nutrition"><em>◈</em>栄養</button>
+      <button data-go="shopping"><em>☰</em>買い物</button>
+      <button data-go="recipes"><em>✎</em>レシピ</button>
+    </div>
+  </div>
+</main>
+</div>
+
+<script>
+const SCREENS = [
+  {id:'login',    name:'ログイン',      desc:'招待済みの2名のみ。新規登録の導線は画面上にも存在しません。'},
+  {id:'home',     name:'今日の献立',    desc:'開いた瞬間に今夜の主菜が分かる。週表を見に行かせないことが継続の条件です。'},
+  {id:'week',     name:'週間献立',      desc:'7日分を一覧。上部の帯は主菜のたんぱく源の並びで、偏りが一目で分かります。'},
+  {id:'detail',   name:'献立詳細',      desc:'ホーム・週間・レシピ一覧のどこからでもタップで開きます。材料と手順、★評価は次回の生成に反映されます。'},
+  {id:'nutrition',name:'栄養サマリ',    desc:'6つの基礎食品群の充足度と週次目標の達成状況。重量入力は不要です。'},
+  {id:'shopping', name:'買い物リスト',  desc:'売り場順に並び、同一食材は合算。2人で同時にチェックできます。'},
+  {id:'request',  name:'リクエスト',    desc:'自由文＋条件タグ。指定した日は固定され、再生成しても動きません。'},
+  {id:'recipes',  name:'レシピ管理',    desc:'品名を入れるとAIが生成し、下書きとして保存。承認して初めて献立に使われます。'},
+  {id:'settings', name:'設定',          desc:'世帯・食の条件・献立の方針。メンバー追加は停止状態で固定します。'}
+];
+
+const WEEK = [
+  {id:'amazu',    d:'8/17 MON', n:'鶏むね肉の甘酢炒め', s:'小松菜のおひたし ／ 豆腐とわかめの味噌汁', c:'中', t:'15分', p:'meat', lock:false},
+  {id:'chanchan', d:'8/18 TUE', n:'鮭のちゃんちゃん焼き', s:'きゅうりの酢の物 ／ なめこ汁', c:'和', t:'30分', p:'fish', lock:false},
+  {id:'mabo',     d:'8/19 WED', n:'麻婆豆腐', s:'もやしのナムル ／ 卵スープ', c:'中', t:'20分', p:'soy', lock:false},
+  {id:'shogayaki',d:'8/20 THU', n:'豚肉と夏野菜の生姜焼き', s:'キャベツの千切り ／ 大根の味噌汁', c:'和', t:'20分', p:'meat', lock:false},
+  {id:'keema',    d:'8/21 FRI', n:'なすとひき肉のキーマカレー', s:'ヨーグルトサラダ', c:'洋', t:'35分', p:'meat', lock:true},
+  {id:'nanban',   d:'8/22 SAT', n:'あじの南蛮漬け', s:'ほうれん草の白和え ／ 豆腐の味噌汁', c:'和', t:'40分', p:'fish', lock:false},
+  {id:'soboro',   d:'8/23 SUN', n:'だし巻き卵と鶏そぼろ丼', s:'トマトの和え物 ／ お吸い物', c:'和', t:'25分', p:'egg', lock:false}
+];
+
+const PROTEIN = {meat:'肉', fish:'魚', egg:'卵', soy:'大豆'};
+
+const RECIPES = {
+  amazu:{name:'鶏むね肉の甘酢炒め', cat:'中華', type:'主菜', p:'meat', time:15, serv:2, day:'8月17日（月）',
+    src:'AI生成 · 編集済', star:2, groups:'1群 · 3群 · 4群 · 6群',
+    ing:[['鶏むね肉','250 g'],['玉ねぎ','1/2 個'],['ピーマン','2 個'],['片栗粉','大さじ2'],['酢・砂糖・醤油','各大さじ1.5']],
+    steps:['鶏むね肉をひと口大のそぎ切りにし、片栗粉をまぶす。','フライパンで鶏肉を両面焼き、玉ねぎとピーマンを加えて炒める。','合わせた調味料を回し入れ、とろみがつくまで絡める。'],
+    memo:'片栗粉をまぶすとむね肉でもぱさつきません。'},
+
+  ohitashi:{name:'小松菜とにんじんのおひたし', cat:'和食', type:'副菜', p:null, time:7, serv:2, day:'8月17日（月）',
+    src:'手動登録', star:3, groups:'3群 · 4群',
+    ing:[['小松菜','1 束'],['にんじん','1/3 本'],['だし汁','100 ml'],['醤油','小さじ2'],['かつお節','ひとつまみ']],
+    steps:['小松菜は熱湯でさっと茹で、水にとって水気を絞り4cm幅に切る。','にんじんは細切りにして同じ湯で1分茹でる。','だし汁と醤油に浸し、10分置いてかつお節をのせる。'],
+    memo:'前日に作って冷蔵で2日もちます。'},
+
+  misoshiru:{name:'豆腐とわかめの味噌汁', cat:'和食', type:'汁物', p:'soy', time:8, serv:2, day:'8月17日（月）',
+    src:'手動登録', star:3, groups:'1群 · 2群',
+    ing:[['絹豆腐','1/2 丁'],['乾燥わかめ','2 g'],['だし汁','400 ml'],['味噌','大さじ1.5'],['小ねぎ','少々']],
+    steps:['だし汁を温め、さいの目に切った豆腐を入れる。','わかめを加えてひと煮立ちさせる。','火を止めて味噌を溶き入れ、小ねぎを散らす。'],
+    memo:'味噌は沸騰させると香りが飛びます。'},
+
+  chanchan:{name:'鮭のちゃんちゃん焼き', cat:'和食', type:'主菜', p:'fish', time:30, serv:2, day:'8月18日（火）',
+    src:'AI生成 · 編集済', star:3, groups:'1群 · 3群 · 4群 · 6群',
+    ing:[['生鮭','2 切'],['キャベツ','1/4 個'],['玉ねぎ','1/2 個'],['味噌','大さじ2'],['みりん・酒','各大さじ1'],['バター','10 g']],
+    steps:['キャベツと玉ねぎをざく切りにしてフライパンに敷く。','鮭をのせ、合わせた味噌だれをかけて蓋をし、中火で12分蒸し焼きにする。','仕上げにバターを落とし、全体を混ぜ合わせる。'],
+    memo:'鮭は前夜に冷蔵庫へ移して解凍しておく。'},
+
+  mabo:{name:'麻婆豆腐', cat:'中華', type:'主菜', p:'soy', time:20, serv:2, day:'8月19日（水）',
+    src:'AI生成 · 編集済', star:3, groups:'1群 · 4群 · 6群',
+    ing:[['木綿豆腐','1 丁'],['豚ひき肉','120 g'],['長ねぎ','1/2 本'],['豆板醤','小さじ1'],['鶏がらスープ','200 ml'],['水溶き片栗粉','適量']],
+    steps:['豆腐は角切りにして下茹でし、水気を切る。','ひき肉と豆板醤を炒め、香りが出たらスープと豆腐を加えて5分煮る。','水溶き片栗粉でとろみをつけ、刻んだ長ねぎを加える。'],
+    memo:'豆腐を下茹ですると崩れにくく、水っぽくなりません。'},
+
+  shogayaki:{name:'豚肉と夏野菜の生姜焼き', cat:'和食', type:'主菜', p:'meat', time:20, serv:2, day:'8月20日（木）',
+    src:'手動登録', star:3, groups:'1群 · 3群 · 4群 · 6群',
+    ing:[['豚こま切れ肉','300 g'],['なす','1 本'],['ピーマン','2 個'],['すりおろし生姜','大さじ1'],['醤油・みりん・酒','各大さじ1.5']],
+    steps:['なすとピーマンを乱切りにし、油で炒めて一度取り出す。','豚肉を炒め、色が変わったら調味料を加える。','野菜を戻し入れ、たれを絡めて仕上げる。'],
+    memo:'なすは先に炒めると油を吸いすぎません。'},
+
+  keema:{name:'なすとひき肉のキーマカレー', cat:'洋食', type:'主菜', p:'meat', time:35, serv:2, day:'8月21日（金）',
+    src:'AI生成 · 未編集', star:2, groups:'1群 · 3群 · 4群 · 5群 · 6群',
+    ing:[['合いびき肉','300 g'],['なす','2 本'],['玉ねぎ','1 個'],['トマト缶','1/2 缶'],['カレールー','2 片'],['ごはん','2 膳']],
+    steps:['玉ねぎをみじん切りにして飴色になるまで炒める。','ひき肉となすを加えて炒め、トマト缶と水150mlを入れて10分煮る。','火を止めてルーを溶かし、弱火で5分煮詰める。'],
+    memo:'リクエストで金曜に固定された献立です。'},
+
+  nanban:{name:'あじの南蛮漬け', cat:'和食', type:'主菜', p:'fish', time:40, serv:2, day:'8月22日（土）',
+    src:'AI生成 · 編集済', star:3, groups:'1群 · 3群 · 4群 · 6群',
+    ing:[['あじ','4 尾'],['玉ねぎ','1/2 個'],['にんじん','1/3 本'],['片栗粉','適量'],['酢','大さじ4'],['砂糖・醤油','各大さじ2']],
+    steps:['あじは三枚におろして片栗粉をまぶし、170℃の油で揚げる。','玉ねぎとにんじんを薄切りにし、南蛮酢に漬ける。','揚げたてのあじを南蛮酢に加え、30分以上漬け込む。'],
+    memo:'翌日の方が味がなじみます。作りおき向き。'},
+
+  soboro:{name:'だし巻き卵と鶏そぼろ丼', cat:'和食', type:'主菜', p:'egg', time:25, serv:2, day:'8月23日（日）',
+    src:'手動登録', star:2, groups:'1群 · 5群 · 6群',
+    ing:[['卵','4 個'],['鶏ひき肉','200 g'],['だし汁','大さじ3'],['醤油・みりん・砂糖','各大さじ1.5'],['ごはん','2 膳']],
+    steps:['鶏ひき肉を調味料で炒め、汁気がなくなるまで煮詰める。','卵にだし汁を混ぜ、卵焼き器で薄く焼き重ねる。','ごはんにそぼろをのせ、切っただし巻き卵を添える。'],
+    memo:'そぼろは多めに作って冷凍しておくと便利です。'}
+};
+
+const nav = document.getElementById('nav');
+SCREENS.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='navbtn'; b.dataset.go=s.id;
+  b.innerHTML=`<em>${String(i+1).padStart(2,'0')}</em>${s.name}`;
+  nav.appendChild(b);
+});
+
+document.getElementById('weeklist').innerHTML = WEEK.map(w=>`
+  <div class="day" data-recipe="${w.id}">
+    <div class="spine m-${w.p}"></div>
+    <div class="daybody">
+      <div class="daytop">
+        <span class="daydate">${w.d}</span>
+        <span class="tag">${w.c} · ${w.t}${w.lock?' 🔒':''}</span>
+      </div>
+      <div class="daydish">${w.n}</div>
+      <div class="daysub">${w.s}</div>
+    </div>
+    <span class="chev" style="align-self:center;padding-right:12px">›</span>
+  </div>`).join('');
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('on', e.dataset.s===id));
+  document.querySelectorAll('.navbtn').forEach(e=>e.classList.toggle('on', e.dataset.go===id));
+  document.querySelectorAll('#tabbar button').forEach(e=>e.classList.toggle('on', e.dataset.go===id));
+  const s=SCREENS.find(x=>x.id===id);
+  document.getElementById('caption').innerHTML=`<h2>${s.name}</h2><p>${s.desc}</p>`;
+  document.getElementById('scroll').scrollTop=0;
+}
+let prev='home';
+
+function openRecipe(id){
+  const r=RECIPES[id];
+  if(!r) return;
+  const cur=document.querySelector('.screen.on');
+  if(cur && cur.dataset.s!=='detail') prev=cur.dataset.s;
+  const stars='★'.repeat(r.star)+`<span style="color:var(--line)">${'★'.repeat(3-r.star)}</span>`;
+  const pdot = r.p ? `<span class="dot m-${r.p}"></span><span style="font-size:11px;color:var(--ink-3)">たんぱく源：${PROTEIN[r.p]}</span>` : '';
+
+  document.getElementById('detailbody').innerHTML=`
+    <div class="hd" style="padding-top:2px">
+      <div class="eyebrow">${r.day} · ${r.type}</div>
+      <h1>${r.name}</h1>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:11px">
+        <span class="tag">${r.cat}</span><span class="tag">${r.time}分</span>
+        <span class="tag">${r.serv}人分</span><span class="tag ai">${r.src}</span>
+      </div>
+      ${pdot?`<div style="display:flex;align-items:center;gap:8px;margin-top:13px">${pdot}
+        <span style="margin-left:auto;font-size:10.5px;color:var(--ink-3)">${r.groups}</span></div>`:''}
+    </div>
+
+    <div class="eyebrow" style="margin-top:6px">INGREDIENTS / ${r.serv}人分</div>
+    <div class="card" style="margin-top:9px;padding:4px 16px">
+      ${r.ing.map(i=>`<div class="ing">${i[0]}<span class="qty">${i[1]}</span></div>`).join('')}
+    </div>
+
+    <div class="eyebrow" style="margin-top:22px">STEPS</div>
+    <div class="card" style="margin-top:9px">
+      ${r.steps.map((s,i)=>`<div class="step"><i>${String(i+1).padStart(2,'0')}</i><span>${s}</span></div>`).join('')}
+    </div>
+
+    <div class="eyebrow" style="margin-top:22px">MEMO</div>
+    <div class="note" style="margin-top:9px">${r.memo}</div>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-top:24px">
+      <span class="eyebrow">この料理の評価</span>
+      <span style="margin-left:auto;font-size:17px;letter-spacing:2px;color:var(--yuzu)">${stars}</span>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn sm ghost">レシピを編集</button>
+      <button class="btn sm ghost">もう作らない</button>
+    </div>
+    <button class="btn sm ghost" style="margin-top:9px">この日を差し替え</button>`;
+  show('detail');
+}
+
+document.addEventListener('click',e=>{
+  const r=e.target.closest('[data-recipe]');
+  if(r){ openRecipe(r.dataset.recipe); return; }
+  if(e.target.closest('#backbtn')){ show(prev); return; }
+  const b=e.target.closest('[data-go]');
+  if(b){ show(b.dataset.go); return; }
+  const c=e.target.closest('.chip');
+  if(c) c.classList.toggle('on');
+  const it=e.target.closest('.item');
+  if(it && it.querySelector('.box')){
+    it.classList.toggle('done');
+    it.querySelector('.box').classList.toggle('done');
+  }
+});
+show('home');
+</script>
+</body>
+</html>

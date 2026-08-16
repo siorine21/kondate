@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------
+   デザイントークン（仕様書 5.6）
+   値はここが唯一の定義元。コンポーネントで色を直書きしない。
+   --------------------------------------------------------------- */
+:root {
+  --paper: #f1f3ee; /* 背景 */
+  --card: #ffffff;
+  --ink: #171c1a; /* 本文 */
+  --ink-2: #5a635f;
+  --ink-3: #909791;
+  --line: #dee2d9;
+  --ai: #2c4a54; /* 主色：藍の器 */
+  --ai-soft: #e7edee;
+  --yuzu: #c08a24; /* 差し色 */
+
+  /* たんぱく源 */
+  --meat: #a85751;
+  --fish: #3f7391;
+  --egg: #c08a24;
+  --soy: #6e8b5a;
+
+  --radius: 14px;
+}
+
+/* ---------------------------------------------------------------
+   Tailwind へのブリッジ
+   上の CSS 変数を Tailwind のユーティリティとして使えるようにする。
+   例: bg-paper / text-ink-2 / border-line / rounded-card / font-mincho
+   --------------------------------------------------------------- */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-ai: var(--ai);
+  --color-ai-soft: var(--ai-soft);
+  --color-yuzu: var(--yuzu);
+
+  --color-meat: var(--meat);
+  --color-fish: var(--fish);
+  --color-egg: var(--egg);
+  --color-soy: var(--soy);
+
+  --radius-card: var(--radius);
+
+  /* 書体の役割分担（仕様書 5.6 / 付録 A-3）
+     見出し＝明朝 / 本文＝ゴシック / 数値・ラベル＝等幅 */
+  --font-mincho: var(--font-shippori), serif;
+  --font-gothic: var(--font-zen), system-ui, sans-serif;
+  --font-mono: var(--font-roboto-mono), monospace;
+}
+
+html {
+  background: var(--paper);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-zen), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
