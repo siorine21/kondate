@@ -3,12 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { requireSupabaseEnv } from "./env";
 
-/* 認証セッションの更新のみを行う。
-   Server Component は Cookie を書き込めないため、トークンの
-   リフレッシュはここで行い、更新後の Cookie をレスポンスに載せる。
+const LOGIN_PATH = "/login";
 
-   ログイン画面以外を保護するリダイレクト処理と、これを呼び出す
-   ルート直下の middleware.ts は Phase 1（認証）で追加する。 */
+/* セッションを更新し、ログイン画面以外を保護する（仕様書 4.2）。
+
+   Server Component は Cookie を書き込めないため、トークンのリフレッシュは
+   ここで行い、更新後の Cookie をレスポンスに載せる。 */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -34,7 +34,38 @@ export async function updateSession(request: NextRequest) {
   });
 
   // getUser() を呼ぶとトークンが検証・更新される。この呼び出しは省略しない。
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const isLoginPath = request.nextUrl.pathname === LOGIN_PATH;
+
+  if (!user && !isLoginPath) {
+    return redirectTo(LOGIN_PATH, request, supabaseResponse);
+  }
+
+  if (user && isLoginPath) {
+    return redirectTo("/", request, supabaseResponse);
+  }
 
   return supabaseResponse;
+}
+
+/* リダイレクトしても、更新されたセッション Cookie は落とさない。 */
+function redirectTo(
+  pathname: string,
+  request: NextRequest,
+  sessionResponse: NextResponse,
+) {
+  const target = request.nextUrl.clone();
+  target.pathname = pathname;
+  target.search = "";
+
+  const response = NextResponse.redirect(target);
+
+  for (const cookie of sessionResponse.cookies.getAll()) {
+    response.cookies.set(cookie);
+  }
+
+  return response;
 }
