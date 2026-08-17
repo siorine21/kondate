@@ -11,7 +11,9 @@
     "db:migrate": "node scripts/db-exec.mjs supabase/migrations",
     "db:setup": "node scripts/db-exec.mjs supabase/setup/01_household.sql",
     "db:verify": "node scripts/db-exec.mjs supabase/setup/02_verify_rls.sql",
-    "db:cleanup": "node scripts/db-exec.mjs supabase/setup/03_cleanup_verify.sql"
+    "db:cleanup": "node scripts/db-exec.mjs supabase/setup/03_cleanup_verify.sql",
+    "db:fixtures": "node scripts/db-exec.mjs supabase/setup/02_verify_fixtures.sql",
+    "verify:rls": "node scripts/verify-rls.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
