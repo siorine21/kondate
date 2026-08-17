@@ -23,8 +23,16 @@ npm run db:verify    # RLS の検証。結果表が出ます
 npm run db:cleanup   # 検証用データの削除
 ```
 
-プロジェクト ref は `.env.local` の `NEXT_PUBLIC_SUPABASE_URL` から自動で読みます。
-`SUPABASE_PROJECT_REF` を設定して上書きすることもできます。
+プロジェクト ref は `SUPABASE_PROJECT_REF` → 環境変数の URL →
+`.env.local` の URL の順に探します。設定を取り違えても別経路で復元できます。
+
+```bash
+# 何が実行されるかだけ見る（通信しません）
+node scripts/db-exec.mjs supabase/migrations --dry-run
+
+# いまの状態を確認する（テーブル / RLS / ポリシー数）
+node scripts/db-exec.mjs --inspect
+```
 
 > **個人アクセストークンはアカウント全体の管理者権限を持ちます。**
 > service_role キーより強く、全プロジェクトを操作できます。

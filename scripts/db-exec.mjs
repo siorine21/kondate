@@ -27,27 +27,52 @@ const API_ORIGIN = "https://api.supabase.com";
 
 /* ---------- 設定の読み取り ---------- */
 
-async function readProjectRef() {
-  const fromEnv = process.env.SUPABASE_PROJECT_REF;
-  if (fromEnv) return fromEnv;
+function refFromUrl(value) {
+  if (!value) return null;
+  try {
+    const host = new URL(value).hostname; // <ref>.supabase.co
+    const ref = host.split(".")[0];
+    return ref || null;
+  } catch {
+    return null;
+  }
+}
 
-  // .env.local の NEXT_PUBLIC_SUPABASE_URL から拾う
+/* 識別子は複数の経路から復元する。
+   設定ミス（キーと識別子の取り違え、.env.local の置き忘れ）から立ち直れる。 */
+async function readProjectRef() {
+  if (process.env.SUPABASE_PROJECT_REF) return process.env.SUPABASE_PROJECT_REF;
+
+  const fromEnvUrl =
+    refFromUrl(process.env.NEXT_PUBLIC_SUPABASE_URL) ??
+    refFromUrl(process.env.SUPABASE_URL);
+  if (fromEnvUrl) return fromEnvUrl;
+
   try {
     const text = await readFile(path.resolve(".env.local"), "utf8");
-    const line = text
-      .split("\n")
-      .find((l) => l.startsWith("NEXT_PUBLIC_SUPABASE_URL="));
-    if (line) {
-      const url = line.slice("NEXT_PUBLIC_SUPABASE_URL=".length).trim();
-      const host = new URL(url).hostname; // <ref>.supabase.co
-      const ref = host.split(".")[0];
+    for (const key of ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL"]) {
+      const line = text.split("\n").find((l) => l.startsWith(`${key}=`));
+      const ref = refFromUrl(line?.slice(key.length + 1).trim());
       if (ref) return ref;
     }
   } catch {
-    // .env.local が無い場合は下でエラーにする
+    // .env.local が無い場合は呼び出し側でエラーにする
   }
   return null;
 }
+
+/* テーブル・RLS・ポリシーの現況を一覧する（資料 4.3 の inspect 相当）。 */
+const INSPECT_SQL = `
+select
+  c.relname                                        as table_name,
+  case when c.relrowsecurity then 'RLS有効' else 'RLS無効' end as rls,
+  count(p.polname)                                 as policies
+from pg_class c
+left join pg_policy p on p.polrelid = c.oid
+where c.relnamespace = 'public'::regnamespace and c.relkind = 'r'
+group by c.relname, c.relrowsecurity
+order by c.relname;
+`;
 
 function fail(message) {
   console.error(`\n${message}\n`);
@@ -109,6 +134,9 @@ async function runSql({ origin, ref, token, sql }) {
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      /* 管理 API の前段の WAF が、HTTP クライアント既定の User-Agent を
+         弾くことがある。名乗らないと 403 が返り、認証エラーと見分けがつかない。 */
+      "User-Agent": "kondate-db-exec",
     },
     body: JSON.stringify({ query: sql }),
   });
@@ -168,11 +196,17 @@ function printRows(rows) {
 /* ---------- 本体 ---------- */
 
 async function main() {
-  const targets = process.argv.slice(2);
-  if (targets.length === 0) {
+  const args = process.argv.slice(2);
+  const dryRun = args.includes("--dry-run");
+  const inspect = args.includes("--inspect");
+  const targets = args.filter((a) => !a.startsWith("--"));
+
+  if (targets.length === 0 && !inspect) {
     fail(
       "実行する SQL ファイルかディレクトリを指定してください。\n" +
-        "  例: node scripts/db-exec.mjs supabase/migrations",
+        "  例: node scripts/db-exec.mjs supabase/migrations\n" +
+        "      node scripts/db-exec.mjs supabase/migrations --dry-run\n" +
+        "      node scripts/db-exec.mjs --inspect",
     );
   }
 
@@ -196,10 +230,39 @@ async function main() {
   }
 
   const origin = process.env.SUPABASE_API_ORIGIN ?? API_ORIGIN;
-  const files = await collectSqlFiles(targets);
 
   console.log(`プロジェクト: ${ref}`);
-  console.log(`対象ファイル: ${files.length} 件\n`);
+
+  if (inspect) {
+    console.log("現況（テーブル / RLS / ポリシー数）\n");
+    const result = await runSql({ origin, ref, token, sql: INSPECT_SQL });
+    if (!result.ok) {
+      console.error(`  失敗 (HTTP ${result.status})`);
+      console.error(`  ${result.raw}`);
+      fail("上のレスポンスをそのまま共有してください。");
+    }
+    printRows(result.parsed);
+    return;
+  }
+
+  const files = await collectSqlFiles(targets);
+  console.log(`対象ファイル: ${files.length} 件`);
+  if (dryRun) console.log("--dry-run: 実行せず対象を表示します");
+  console.log("");
+
+  if (dryRun) {
+    for (const file of files) {
+      const sql = substitutePlaceholders(await readFile(file, "utf8"), file);
+      const statements = sql
+        .split(";")
+        .filter((s) => s.replace(/--[^\n]*/g, "").trim().length > 0).length;
+      console.log(
+        `  ${path.relative(process.cwd(), file)}  (約 ${statements} 文)`,
+      );
+    }
+    console.log("\n実行はしていません。--dry-run を外すと適用されます。");
+    return;
+  }
 
   for (const file of files) {
     const label = path.relative(process.cwd(), file);
