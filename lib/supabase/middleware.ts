@@ -40,7 +40,15 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isLoginPath = request.nextUrl.pathname === LOGIN_PATH;
+  const { pathname } = request.nextUrl;
+  const isLoginPath = pathname === LOGIN_PATH;
+
+  /* API はリダイレクトしない。呼び出し側は JSON を期待しているので、
+     ログイン画面への 307 を返すと 401 を受け取れなくなる。
+     未認証の判定は各 Route Handler が行い 401 を返す（仕様書 4.2）。 */
+  if (pathname.startsWith("/api/")) {
+    return supabaseResponse;
+  }
 
   if (!user && !isLoginPath) {
     return redirectTo(LOGIN_PATH, request, supabaseResponse);
