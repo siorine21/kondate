@@ -165,11 +165,13 @@ export type Database = {
         Row: HouseholdRow;
         Insert: Partial<HouseholdRow>;
         Update: Partial<HouseholdRow>;
+        Relationships: [];
       };
       profiles: {
         Row: ProfileRow;
         Insert: Writable<ProfileRow, "user_id" | "household_id" | "display_name">;
         Update: Partial<ProfileRow>;
+        Relationships: [];
       };
       ingredient_master: {
         Row: IngredientMasterRow;
@@ -178,6 +180,7 @@ export type Database = {
           "household_id" | "name" | "shop_category"
         >;
         Update: Partial<IngredientMasterRow>;
+        Relationships: [];
       };
       recipes: {
         Row: RecipeRow;
@@ -186,26 +189,31 @@ export type Database = {
           "household_id" | "name" | "category" | "dish_type" | "cook_time_min"
         >;
         Update: Partial<RecipeRow>;
+        Relationships: [];
       };
       recipe_ingredients: {
         Row: RecipeIngredientRow;
         Insert: Writable<RecipeIngredientRow, "recipe_id" | "name">;
         Update: Partial<RecipeIngredientRow>;
+        Relationships: [];
       };
       meal_plans: {
         Row: MealPlanRow;
         Insert: Writable<MealPlanRow, "household_id" | "week_start">;
         Update: Partial<MealPlanRow>;
+        Relationships: [];
       };
       meal_plan_items: {
         Row: MealPlanItemRow;
         Insert: Writable<MealPlanItemRow, "plan_id" | "date" | "slot">;
         Update: Partial<MealPlanItemRow>;
+        Relationships: [];
       };
       plan_requests: {
         Row: PlanRequestRow;
         Insert: Writable<PlanRequestRow, "plan_id">;
         Update: Partial<PlanRequestRow>;
+        Relationships: [];
       };
       shopping_items: {
         Row: ShoppingItemRow;
@@ -214,17 +222,19 @@ export type Database = {
           "plan_id" | "name" | "shop_category"
         >;
         Update: Partial<ShoppingItemRow>;
+        Relationships: [];
       };
       recipe_ratings: {
         Row: RecipeRatingRow;
         Insert: Writable<RecipeRatingRow, "recipe_id" | "user_id" | "score">;
         Update: Partial<RecipeRatingRow>;
+        Relationships: [];
       };
     };
-    Views: Record<never, never>;
+    Views: Record<string, never>;
     Functions: {
       current_household_id: {
-        Args: Record<never, never>;
+        Args: Record<string, never>;
         Returns: string | null;
       };
     };
@@ -239,7 +249,7 @@ export type Database = {
       entry_type: EntryType;
       shop_category: ShopCategory;
     };
-    CompositeTypes: Record<never, never>;
+    CompositeTypes: Record<string, never>;
   };
 };
 
