@@ -107,47 +107,42 @@ const record = (item, expected, actual, ok) =>
   checks.push({ item, expected, actual, ok });
 
 async function checkSignupDisabled({ url, key }) {
-  /* 仕様書 2.2-1 / 4.1。アプリに導線が無いだけでは不十分で、
-     API そのものが塞がれていることを確かめる。 */
-  const probe = `rls-probe-${Date.now()}@example.invalid`;
-  const result = await request(`${url}/auth/v1/signup`, {
-    key,
-    method: "POST",
-    body: { email: probe, password: `Pw-${Date.now()}-Aa1!` },
-  });
+  /* 仕様書 2.2-1 / 4.1。
+     サインアップを実際に試す方式は使わない。理由が2つある。
+     1) Supabase はメール形式の検証をサインアップ可否の判定より先に行う。
+        拒否されても「無効だから」か「アドレスが不正だから」か区別できない。
+     2) もし有効だった場合、検査そのものがユーザーを作ってしまう。
+     設定を読むほうが確実で、副作用もない。 */
+  const result = await request(`${url}/auth/v1/settings`, { key });
+  const value = result.parsed?.disable_signup;
 
-  /* 「何かのエラーが返った」を合格にしてはならない。
-     ネットワーク不調や設定ミスでも 4xx は返るため、それを
-     「サインアップは無効」と読むと、実際は開いているのに
-     合格になってしまう。Supabase が明示的に断った場合だけ合格とする。 */
-  const saysDisabled =
-    !result.ok && /signup|not allowed|disabled/i.test(result.raw);
-  const inconclusive = !result.ok && !saysDisabled;
-
-  record(
-    "サインアップが API レベルで無効",
-    "Supabase が明示的に拒否",
-    result.ok
-      ? "受理された"
-      : saysDisabled
-        ? `拒否 (HTTP ${result.status})`
-        : `判定できず (HTTP ${result.status}) ${result.raw.slice(0, 60)}`,
-    saysDisabled,
-  );
-
-  if (inconclusive) {
-    console.error(
-      "\n  サインアップ可否を判定できませんでした。上の応答を確認してください。\n",
+  if (!result.ok || typeof value !== "boolean") {
+    record(
+      "サインアップが無効",
+      "disable_signup: true",
+      `判定できず (HTTP ${result.status}) ${result.raw.slice(0, 60)}`,
+      false,
     );
+    return;
   }
 
-  if (result.ok) {
+  record(
+    "サインアップが無効",
+    "disable_signup: true",
+    `disable_signup: ${value}`,
+    value === true,
+  );
+
+  if (value !== true) {
     console.error(
-      "\n  警告: サインアップが有効です。作成された可能性のあるユーザー:",
-      probe,
+      "\n  警告: サインアップが有効です。" +
+        "「招待された2名のみ」という要件（仕様書 2.2-1）を満たしていません。",
     );
     console.error(
-      "  Authentication → Sign In / Providers → Email で無効にしてください。\n",
+      "  Authentication → Sign In / Providers → Email の",
+    );
+    console.error(
+      "  「Allow new users to sign up」を無効にしてください。\n",
     );
   }
 }
