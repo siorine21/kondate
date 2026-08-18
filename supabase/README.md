@@ -39,6 +39,12 @@ node scripts/db-exec.mjs --inspect
 > 環境変数でのみ渡し、ファイルに保存せず、**用が済んだら失効させてください。**
 > アプリコードからは決して読み込まないこと（仕様書 2.2-3 / 4.2）。
 
+> **Claude Code のクラウドセッションから実行する場合**
+> Node の組み込み `fetch` は `HTTPS_PROXY` を読まないため、そのままでは
+> エグレスプロキシを迂回して「Host not in allowlist」で失敗します。
+> `NODE_USE_ENV_PROXY=1` を付けて実行してください（Node 22.21 以降）。
+> 手元の PC で実行する場合は不要です。
+
 ## A2. RLS の検証だけをアプリと同じ経路で行う
 
 `scripts/verify-rls.mjs` は**管理者権限を一切使いません。**
