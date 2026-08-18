@@ -12,6 +12,9 @@
 --
 -- 実行後、確認が済んだら 03_cleanup_verify.sql で削除してください。
 
+-- 0) 何度実行しても同じ結果になるよう、前回の検証用レシピを消す
+delete from recipes where name like 'RLS検証用%';
+
 -- 1) ダミー世帯を作る
 insert into households (id, name)
 values ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'RLS検証用ダミー世帯')
