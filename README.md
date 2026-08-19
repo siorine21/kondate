@@ -90,8 +90,13 @@ supabase/       マイグレーション
 
 ### 2. 環境変数を登録する
 
-**Environment Variables** に 3 つ登録します。Production / Preview /
-Development のすべてにチェックを入れてください。
+**Environment Variables** に 3 つ登録します。適用範囲を選ぶ欄では
+**「Production and Preview」**（既定）を選んでください。
+
+`Development` は不要です（ローカルは `.env.local` を使うため）。
+`Production` だけにしないのは、このリポジトリに `main` が無く、
+Vercel が配信をどちらに分類するか確実でないためです。
+Preview 扱いになった場合、環境変数が渡らずアプリが起動時に落ちます。
 
 | 変数 | Sensitive | 値 |
 | --- | --- | --- |
@@ -108,6 +113,9 @@ Development のすべてにチェックを入れてください。
 奪われ、**Sensitive 指定されていない環境変数が列挙・復号されました。**
 Sensitive 指定されたものは侵害されていません。これが実際に持ちこたえた
 唯一の制御なので、必ず有効にしてください。
+
+Import 画面に Sensitive のトグルが無い場合は、デプロイ完了後に
+**Settings → Environment Variables** から設定できます。
 
 `NEXT_PUBLIC_*` の 2 つは Sensitive にできません（ビルド時にクライアントへ
 埋め込むため）。ただし、どちらももともとブラウザに露出する前提の値です。
