@@ -78,6 +78,47 @@ supabase/       マイグレーション
 - [ ] Phase 6 — リクエスト
 - [ ] Phase 7 — 仕上げ
 
+## Vercel へのデプロイ
+
+仕様書 2 章のホスティング指定に従い Vercel へ配信します。
+
+### 1. プロジェクトを作る
+
+1. [vercel.com](https://vercel.com) に GitHub アカウントでログイン
+2. **Add New → Project** から `siorine21/kondate` を選ぶ
+3. Framework は **Next.js** が自動検出されるのでそのまま
+
+### 2. 環境変数を登録する
+
+**Environment Variables** に 3 つ登録します。Production / Preview /
+Development のすべてにチェックを入れてください。
+
+| 変数 | 値 |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | `.env.local` と同じ |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `.env.local` と同じ |
+| `ANTHROPIC_API_KEY` | サーバ専用。`NEXT_PUBLIC_` を付けない（2.2-2） |
+
+`ANTHROPIC_API_KEY` が未設定でもビルドは通ります。その状態では
+レシピ生成だけが 503 を返し、他の画面は動きます。
+
+### 3. 本番ブランチを指定する
+
+**Settings → Git → Production Branch** を、作業中のブランチ名に変更します。
+`main` を作った場合はそちらを指定してください。
+
+### 4. 配信リージョン
+
+`vercel.json` で `hnd1`（東京）に固定しています。Supabase を
+`ap-northeast-1` に置いているため、DB との往復が国内で閉じます。
+仕様書 2.1 の「週間献立の生成は 2 秒以内」はこの前提で成立します。
+
+### 5. デプロイ後に確認すること
+
+- `/` を開くと `/login` にリダイレクトされる
+- ログインすると `/` が表示される
+- `/api/recipes` に未ログインでアクセスすると 401 が返る
+
 ## 任意：Cloudflare Access による多重防御
 
 仕様書 4.6。実装は不要ですが、Vercel の前段に Cloudflare Access を置くと、
