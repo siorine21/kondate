@@ -93,14 +93,39 @@ supabase/       マイグレーション
 **Environment Variables** に 3 つ登録します。Production / Preview /
 Development のすべてにチェックを入れてください。
 
-| 変数 | 値 |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | `.env.local` と同じ |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `.env.local` と同じ |
-| `ANTHROPIC_API_KEY` | サーバ専用。`NEXT_PUBLIC_` を付けない（2.2-2） |
+| 変数 | Sensitive | 値 |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | 不可 | `.env.local` と同じ |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 不可 | `.env.local` と同じ |
+| `ANTHROPIC_API_KEY` | **必ず有効にする** | サーバ専用。`NEXT_PUBLIC_` を付けない（2.2-2） |
 
 `ANTHROPIC_API_KEY` が未設定でもビルドは通ります。その状態では
 レシピ生成だけが 503 を返し、他の画面は動きます。
+
+#### `ANTHROPIC_API_KEY` は必ず Sensitive にする
+
+2026 年 4 月の Vercel の侵害では、第三者ツール経由で OAuth トークンが
+奪われ、**Sensitive 指定されていない環境変数が列挙・復号されました。**
+Sensitive 指定されたものは侵害されていません。これが実際に持ちこたえた
+唯一の制御なので、必ず有効にしてください。
+
+`NEXT_PUBLIC_*` の 2 つは Sensitive にできません（ビルド時にクライアントへ
+埋め込むため）。ただし、どちらももともとブラウザに露出する前提の値です。
+世帯のデータを守っているのは RLS であって、これらのキーではありません（3.3）。
+
+**この構成で同じ侵害が起きた場合、実害が及ぶのは `ANTHROPIC_API_KEY`
+だけです。** service_role キーをアプリコードで使わないという仕様書 2.2-3 の
+禁止事項が、被害範囲をここまで限定しています。使っていたら、同じ侵害で
+全世帯のデータが RLS を素通りして抜かれていました。
+
+あわせて次の 2 つも行ってください。
+
+- **Anthropic 側で使用上限を設ける。** 漏れた場合の損害額が頭打ちになります
+- **GitHub App のインストール範囲をこのリポジトリだけに絞る。**
+  `All repositories` ではなく `Only select repositories` を選ぶ
+
+なお、このリポジトリには秘密情報を一切コミットしていません
+（`.env.local` は追跡外。全履歴を走査して確認済み）。
 
 ### 3. 本番ブランチを指定する
 
