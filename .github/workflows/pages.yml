@@ -50,16 +50,42 @@ jobs:
         run: npm run build
 
       # 置換が空振りしていないか確かめる。
-      # ここが無いと、設定漏れのまま配信してしまう。
-      - name: Verify the build carries the Supabase URL
+      #
+      # 単に "supabase.co" を探すだけでは駄目だった。supabase-js の
+      # バンドルにこの文字列が元から入っており、Secrets 未設定でも
+      # 素通りする（実際に初回の実行がそうなった）。
+      # プロジェクト固有のホスト名と、鍵そのものが埋め込まれたかを見る。
+      - name: Verify the build carries the Supabase settings
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
-          if ! grep -rq "supabase.co" out/; then
-            echo "配信物に Supabase の接続先が含まれていません。"
-            echo "GitHub Secrets の設定を確認してください。"
+          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
+            echo "GitHub Secrets が設定されていません。"
+            echo "Settings → Secrets and variables → Actions で次の2つを登録してください。"
+            echo "  NEXT_PUBLIC_SUPABASE_URL"
+            echo "  NEXT_PUBLIC_SUPABASE_ANON_KEY"
             exit 1
           fi
 
+          host="${NEXT_PUBLIC_SUPABASE_URL#*://}"
+          host="${host%%/*}"
+
+          if ! grep -rqF "$host" out/; then
+            echo "配信物に接続先（$host）が埋め込まれていません。"
+            exit 1
+          fi
+          if ! grep -rqF "$NEXT_PUBLIC_SUPABASE_ANON_KEY" out/; then
+            echo "配信物に ANON KEY が埋め込まれていません。"
+            exit 1
+          fi
+          echo "接続先と鍵の埋め込みを確認しました。"
+
+      # enablement: true にすると、Settings → Pages を手で開かなくても
+      # 「GitHub Actions で配信する」設定を作ってくれる。
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out

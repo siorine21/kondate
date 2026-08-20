@@ -112,20 +112,28 @@ scripts/          DB 操作と検証のスクリプト
 | `NEXT_PUBLIC_SUPABASE_URL` | `.env.local` と同じ |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `.env.local` と同じ |
 
-未設定のままだとビルドが失敗します。埋め込みが空振りしていないか、
-ワークフロー内で `out/` に接続先が含まれるかを検査しているためです。
+未設定のままだと配信は止まります。ワークフローが、**Secrets が空でないこと**と、
+**そのプロジェクト固有のホスト名と ANON KEY が `out/` に実際に埋め込まれたこと**を
+検査しているためです。
+
+> 最初はここを `grep "supabase.co"` で済ませていましたが、**この検査は無意味でした。**
+> supabase-js のバンドルにこの文字列が元から含まれており、Secrets 未設定でも
+> 素通りします。実際に初回の実行が通ってしまい、気づきました。
+> 検査は「通ること」ではなく「落ちるべきときに落ちること」を確かめないと意味がありません。
 
 ### 2. Pages を有効にする
 
+ワークフローの `configure-pages` に `enablement: true` を付けているので、
+**通常は自動で有効になります。** 権限の都合で失敗した場合だけ、手動で
 **Settings → Pages → Build and deployment → Source** を
-**「GitHub Actions」** にします。「Deploy from a branch」ではありません。
+**「GitHub Actions」** にしてください。「Deploy from a branch」ではありません。
 
 ### 配信の仕組み
 
 1. 対象ブランチへ push
 2. Actions が `npm ci` → `typecheck` → `lint` → `build` を実行
 3. 型か Lint が通らなければ配信しない
-4. `out/` に Supabase の接続先が含まれるかを検査
+4. 接続先と ANON KEY が `out/` に埋め込まれたかを検査
 5. `actions/deploy-pages` が公開
 
 `public/.nojekyll` は Jekyll による `_next/` の除外を止めるために必要です。
