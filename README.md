@@ -6,27 +6,46 @@
 仕様書は [`docs/kondate-spec.md`](docs/kondate-spec.md)、画面モックは
 [`docs/kondate-wireframe.html`](docs/kondate-wireframe.html) にあります。実装前に通読してください。
 
+**仕様書 v1.0 からの変更点は [`docs/kondate-spec-amendment.md`](docs/kondate-spec-amendment.md)
+にまとめています。** ホスティングを Vercel から GitHub Pages（静的配信）へ移したため、
+サーバ側のコード（Route Handler・ミドルウェア）を持ちません。仕様書本体と食い違う箇所は
+変更記録の方が新しいものとして扱ってください。
+
+公開先： https://siorine21.github.io/kondate/
+
 ## 技術スタック
 
 | レイヤ | 採用技術 |
 | --- | --- |
-| フレームワーク | Next.js 15 (App Router) |
+| フレームワーク | Next.js 15 (App Router) / `output: "export"` による静的書き出し |
 | 言語 | TypeScript (strict) |
 | スタイル | Tailwind CSS v4 |
 | DB / 認証 | Supabase (PostgreSQL + Auth + Realtime) |
-| AI | Anthropic Claude API（レシピ生成と自由文のタグ変換のみ） |
-| ホスティング | Vercel |
+| ホスティング | GitHub Pages（GitHub Actions で配信） |
+| AI | 当面不使用（変更記録 3.4） |
 
-週間献立の生成に AI は使いません。DB 上の承認済みレシピから、決定論的な
+週間献立の生成に AI は使いません。DB 上のレシピから、決定論的な
 スコアリングで組みます（仕様書 1.3 / 7 章）。
+
+## この構成での防壁は RLS だけです
+
+サーバを持たないため、ブラウザが直接 Supabase を叩きます。
+ANON KEY はブラウザに必ず露出します。**世帯外のデータを遮断しているのは
+RLS のみです**（仕様書 3.3）。
+
+- テーブルを追加したら、RLS の有効化とポリシー設定を必ずセットで行う
+- SERVICE ROLE KEY はアプリコードで使わない。マイグレーション時のみ（2.2-3）
+- `app/(app)/layout.tsx` のログイン判定は「見せない」ための措置であり、防壁ではない
 
 ## 開発環境の準備
 
 ```bash
 npm install
 cp .env.local.example .env.local   # 値を埋める
-npm run dev                        # http://localhost:3000
+npm run dev                        # http://localhost:3000/kondate/
 ```
+
+`basePath` を `/kondate` にしているため、開発時も `/kondate/` 配下で開きます。
 
 ### 環境変数
 
@@ -34,34 +53,35 @@ npm run dev                        # http://localhost:3000
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase プロジェクトの URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ANON KEY。ブラウザに露出する前提 |
-| `ANTHROPIC_API_KEY` | サーバ専用。`NEXT_PUBLIC_` を付けない |
 
-ANON KEY はブラウザに必ず露出します。世帯外のデータを遮断するのは RLS だけです。
-テーブルを追加したら、必ず RLS の有効化とポリシーの設定をセットで行ってください（仕様書 3.3）。
-
-SERVICE ROLE KEY はアプリコードで使いません。マイグレーション時のみ使用します。
+どちらも秘密ではありませんが、リポジトリにはコミットせず GitHub Secrets に置きます。
 
 ## スクリプト
 
 | コマンド | 内容 |
 | --- | --- |
 | `npm run dev` | 開発サーバ |
-| `npm run build` | 本番ビルド |
-| `npm start` | 本番サーバ |
+| `npm run build` | 静的書き出し（`out/` に生成） |
 | `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run db:migrate` | マイグレーション適用（`supabase/README.md` 参照） |
+| `npm run verify:rls` | RLS の検証 |
 
 ## ディレクトリ
 
 ```
-app/            画面と Route Handler
-  (app)/        認証後の画面
-  globals.css   デザイントークン（仕様書 5.6）
-components/     UI 部品
+app/
+  (auth)/login/   ログイン画面
+  (app)/          ログイン後の画面。layout.tsx が未ログインを弾く
+  globals.css     デザイントークン（仕様書 5.6）
 lib/
-  supabase/     クライアント生成
-  planner/      献立生成。純粋関数のみ。Supabase を import しない
-docs/           仕様書と画面モック
-supabase/       マイグレーション
+  supabase/       クライアント生成と型
+  labels.ts       ENUM の日本語表示
+  planner/        献立生成。純粋関数のみ。Supabase を import しない（Phase 3）
+docs/             仕様書・画面モック・変更記録
+supabase/         マイグレーションと運用 SQL
+scripts/          DB 操作と検証のスクリプト
+.github/workflows/pages.yml   配信ワークフロー
 ```
 
 ## 実装フェーズ
@@ -71,101 +91,63 @@ supabase/       マイグレーション
 
 - [x] Phase 0 — 基盤構築
 - [x] Phase 1 — 認証とスキーマ
-- [ ] Phase 2 — レシピ管理
+- [x] Phase 2 — レシピ管理（完了条件は変更記録 2 章のとおり手入力に変更）
 - [ ] Phase 3 — 献立生成
 - [ ] Phase 4 — 買い物リスト
 - [ ] Phase 5 — 栄養サマリ
 - [ ] Phase 6 — リクエスト
 - [ ] Phase 7 — 仕上げ
 
-## Vercel へのデプロイ
+## GitHub Pages への配信
 
-仕様書 2 章のホスティング指定に従い Vercel へ配信します。
+`.github/workflows/pages.yml` が push を受けて自動で配信します。
+初回だけ、リポジトリ側で 2 つ設定してください。
 
-### 1. プロジェクトを作る
+### 1. Secrets を登録する
 
-1. [vercel.com](https://vercel.com) に GitHub アカウントでログイン
-2. **Add New → Project** から `siorine21/kondate` を選ぶ
-3. Framework は **Next.js** が自動検出されるのでそのまま
+**Settings → Secrets and variables → Actions → New repository secret**
 
-### 2. 環境変数を登録する
+| 名前 | 値 |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | `.env.local` と同じ |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `.env.local` と同じ |
 
-**Environment Variables** に 3 つ登録します。適用範囲を選ぶ欄では
-**「Production and Preview」**（既定）を選んでください。
+未設定のままだとビルドが失敗します。埋め込みが空振りしていないか、
+ワークフロー内で `out/` に接続先が含まれるかを検査しているためです。
 
-`Development` は不要です（ローカルは `.env.local` を使うため）。
-`Production` だけにしないのは、このリポジトリに `main` が無く、
-Vercel が配信をどちらに分類するか確実でないためです。
-Preview 扱いになった場合、環境変数が渡らずアプリが起動時に落ちます。
+### 2. Pages を有効にする
 
-| 変数 | Sensitive | 値 |
-| --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | 不可 | `.env.local` と同じ |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 不可 | `.env.local` と同じ |
-| `ANTHROPIC_API_KEY` | **必ず有効にする** | サーバ専用。`NEXT_PUBLIC_` を付けない（2.2-2） |
+**Settings → Pages → Build and deployment → Source** を
+**「GitHub Actions」** にします。「Deploy from a branch」ではありません。
 
-`ANTHROPIC_API_KEY` が未設定でもビルドは通ります。その状態では
-レシピ生成だけが 503 を返し、他の画面は動きます。
+### 配信の仕組み
 
-#### `ANTHROPIC_API_KEY` は必ず Sensitive にする
+1. 対象ブランチへ push
+2. Actions が `npm ci` → `typecheck` → `lint` → `build` を実行
+3. 型か Lint が通らなければ配信しない
+4. `out/` に Supabase の接続先が含まれるかを検査
+5. `actions/deploy-pages` が公開
 
-2026 年 4 月の Vercel の侵害では、第三者ツール経由で OAuth トークンが
-奪われ、**Sensitive 指定されていない環境変数が列挙・復号されました。**
-Sensitive 指定されたものは侵害されていません。これが実際に持ちこたえた
-唯一の制御なので、必ず有効にしてください。
+`public/.nojekyll` は Jekyll による `_next/` の除外を止めるために必要です。
+消さないでください。
 
-Import 画面に Sensitive のトグルが無い場合は、デプロイ完了後に
-**Settings → Environment Variables** から設定できます。
+### 配信後に確認すること
 
-`NEXT_PUBLIC_*` の 2 つは Sensitive にできません（ビルド時にクライアントへ
-埋め込むため）。ただし、どちらももともとブラウザに露出する前提の値です。
-世帯のデータを守っているのは RLS であって、これらのキーではありません（3.3）。
+- `/kondate/` を開くと `/kondate/login/` に移動する
+- ログインすると献立画面が表示される
+- ログアウト後に `/kondate/recipes/` を直接開くとログイン画面に戻る
 
-**この構成で同じ侵害が起きた場合、実害が及ぶのは `ANTHROPIC_API_KEY`
-だけです。** service_role キーをアプリコードで使わないという仕様書 2.2-3 の
-禁止事項が、被害範囲をここまで限定しています。使っていたら、同じ侵害で
-全世帯のデータが RLS を素通りして抜かれていました。
+## リポジトリを public にしている理由
 
-あわせて次の 2 つも行ってください。
+無料アカウントの GitHub Pages は private リポジトリを配信できません。
+このため public のままにしています。
 
-- **Anthropic 側で使用上限を設ける。** 漏れた場合の損害額が頭打ちになります
-- **GitHub App のインストール範囲をこのリポジトリだけに絞る。**
-  `All repositories` ではなく `Only select repositories` を選ぶ
-
-なお、このリポジトリには秘密情報を一切コミットしていません
-（`.env.local` は追跡外。全履歴を走査して確認済み）。
-
-### 3. 本番ブランチを指定する
-
-**Settings → Git → Production Branch** を、作業中のブランチ名に変更します。
-`main` を作った場合はそちらを指定してください。
-
-### 4. 配信リージョン
-
-`vercel.json` で `hnd1`（東京）に固定しています。Supabase を
-`ap-northeast-1` に置いているため、DB との往復が国内で閉じます。
-仕様書 2.1 の「週間献立の生成は 2 秒以内」はこの前提で成立します。
-
-### 5. デプロイ後に確認すること
-
-- `/` を開くと `/login` にリダイレクトされる
-- ログインすると `/` が表示される
-- `/api/recipes` に未ログインでアクセスすると 401 が返る
+秘密情報は一切コミットしていません（`.env.local` は追跡外。全履歴を走査して確認済み）。
+公開されるのは画面のコードと仕様書で、世帯のデータは Supabase 側にあり RLS が守ります。
 
 ## 任意：Cloudflare Access による多重防御
 
-仕様書 4.6。実装は不要ですが、Vercel の前段に Cloudflare Access を置くと、
-許可したメールアドレス以外はアプリに到達しなくなります。RLS の代わりではなく、
-その手前にもう一枚追加する位置づけです。
-
-1. 独自ドメインを Cloudflare に登録し、ネームサーバを Cloudflare に向ける
-2. Vercel 側でそのドメインをプロジェクトに追加し、指示された DNS レコードを
-   Cloudflare に登録する（プロキシは有効のまま）
-3. Cloudflare Zero Trust → Access → Applications で Self-hosted アプリを追加し、
-   対象をそのドメインにする
-4. ポリシーを Action = Allow、条件を Emails に 2 名のメールアドレスのみとする
-5. 認証方法に One-time PIN（またはメール認証）を設定する
-6. Vercel の Deployment Protection で、Cloudflare を経由しない
-   `*.vercel.app` の直接アクセスを塞ぐ
-
-設定後、許可外のアドレスでアクセスするとログイン画面にすら到達しないことを確認します。
+仕様書 4.6。実装は不要ですが、独自ドメインを当てる場合は前段に
+Cloudflare Access を置けます。RLS の代わりではなく、その手前にもう一枚
+追加する位置づけです。GitHub Pages の `*.github.io` を直接塞ぐことはできないため、
+この構成では効果が限定的です。

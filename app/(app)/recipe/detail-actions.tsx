@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-/* 詳細画面の操作。★評価と「もう作らない」。 */
+import { createClient } from "@/lib/supabase/client";
+
+/* 詳細画面の操作。★評価と「もう作らない」。
+   どちらもブラウザから直接 Supabase を叩く。世帯外のレシピは
+   RLS が弾くので、ここで所有者の確認は書かない（仕様書 3.3）。 */
 
 export function RatingStars({
   recipeId,
@@ -20,13 +24,29 @@ export function RatingStars({
     setScore(next); // 押した感触を先に返す
     setError("");
 
-    const response = await fetch(`/api/recipes/${recipeId}/rating`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ score: next }),
-    });
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!response.ok) {
+    if (!user) {
+      setScore(previous);
+      setError("ログインが切れています。開き直してください。");
+      return;
+    }
+
+    /* 評価は利用者ごとに1件。2人の平均が生成スコアに反映される（7.2）。 */
+    const { error: saveError } = await supabase.from("recipe_ratings").upsert(
+      {
+        recipe_id: recipeId,
+        user_id: user.id,
+        score: next,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "recipe_id,user_id" },
+    );
+
+    if (saveError) {
       setScore(previous); // 保存できていないので見た目も戻す
       setError("評価を保存できませんでした。時間を置いて試してください。");
     }
@@ -48,7 +68,9 @@ export function RatingStars({
               onClick={() => rate(value)}
               type="button"
             >
-              <span className={score !== null && value <= score ? "" : "text-line"}>
+              <span
+                className={score !== null && value <= score ? "" : "text-line"}
+              >
                 ★
               </span>
             </button>
@@ -73,17 +95,22 @@ export function ArchiveButton({ recipeId }: { recipeId: string }) {
   async function archive() {
     setPending(true);
     setError("");
-    const response = await fetch(`/api/recipes/${recipeId}/archive`, {
-      method: "POST",
-    });
+
+    /* 削除ではなくアーカイブ。過去の献立が recipe_id を参照しているため、
+       消すと履歴が壊れる。候補プールからは status で外れる（7.2）。 */
+    const supabase = createClient();
+    const { error: saveError } = await supabase
+      .from("recipes")
+      .update({ status: "archived", updated_at: new Date().toISOString() })
+      .eq("id", recipeId);
+
     setPending(false);
 
-    if (!response.ok) {
+    if (saveError) {
       setError("変更できませんでした。時間を置いて試してください。");
       return;
     }
-    router.push("/recipes");
-    router.refresh();
+    router.replace("/recipes/");
   }
 
   if (!confirming) {
