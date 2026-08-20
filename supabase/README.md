@@ -21,6 +21,7 @@ npm run db:migrate   # スキーマと RLS
 npm run db:setup     # 世帯とプロフィール
 npm run db:verify    # RLS の検証。結果表が出ます
 npm run db:cleanup   # 検証用データの削除
+npm run db:seed      # シードレシピ20件（仕様書 11.1）
 ```
 
 プロジェクト ref は `SUPABASE_PROJECT_REF` → 環境変数の URL →

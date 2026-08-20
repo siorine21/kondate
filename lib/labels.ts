@@ -91,14 +91,20 @@ export const FOOD_GROUP_LABEL: Record<number, string> = {
   6: "6群 油脂",
 };
 
-/* 分量の表示。qty が無い材料（適量など）は単位だけを出す。 */
+/* 分量の表示。qty が無い材料（適量など）は単位だけを出す。
+
+   「大さじ」「小さじ」は数の前に置く。日本語のレシピはそう書くため、
+   「1.5 大さじ」ではなく「大さじ1.5」と出す。 */
+const UNIT_BEFORE_QTY = ["大さじ", "小さじ"];
+
 export function formatQuantity(
   qty: number | null,
   unit: string | null,
 ): string {
   if (qty === null) return unit ?? "適量";
-  const rounded = Number.isInteger(qty) ? String(qty) : String(qty);
-  return unit ? `${rounded} ${unit}` : rounded;
+  if (!unit) return String(qty);
+  if (UNIT_BEFORE_QTY.includes(unit)) return `${unit}${qty}`;
+  return `${qty} ${unit}`;
 }
 
 /* 世帯人数への換算（仕様書 5.2-4「世帯人数に換算した分量」）。 */

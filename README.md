@@ -65,6 +65,7 @@ npm run dev                        # http://localhost:3000/kondate/
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run db:migrate` | マイグレーション適用（`supabase/README.md` 参照） |
+| `npm run db:seed` | シードレシピ20件の投入（仕様書 11.1） |
 | `npm run verify:rls` | RLS の検証 |
 
 ## ディレクトリ
