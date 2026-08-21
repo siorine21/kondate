@@ -17,6 +17,7 @@ import type {
 } from "@/lib/supabase/types";
 
 import { RecipeForm } from "./recipe-form";
+import { SeedButton } from "./seed-button";
 
 /* レシピ管理（仕様書 5.2-8）。
 
@@ -74,7 +75,16 @@ export default function RecipesPage() {
       </header>
 
       {householdId ? (
-        <RecipeForm householdId={householdId} onSaved={load} />
+        <>
+          <RecipeForm householdId={householdId} onSaved={load} />
+          {recipes ? (
+            <SeedButton
+              existingNames={recipes.map((r) => r.name)}
+              householdId={householdId}
+              onSeeded={load}
+            />
+          ) : null}
+        </>
       ) : null}
 
       {error ? (
