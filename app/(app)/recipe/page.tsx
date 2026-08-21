@@ -53,15 +53,33 @@ function RecipeDetail() {
 
     void (async () => {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
 
-      const { data: recipe } = await supabase
-        .from("recipes")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+      /* getUser は毎回サーバーに問い合わせる。ここで要るのは自分の評価を
+         見分けるための id だけで、行を絞るのは RLS の仕事なので、
+         手元にあるセッションから読む（仕様書 3.3）。 */
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      /* 4 本まとめて投げる。順に待つと、そのぶん表示が遅れる。 */
+      const [
+        { data: recipe },
+        { data: ingredients },
+        { data: ratings },
+        { data: household },
+      ] = await Promise.all([
+        supabase.from("recipes").select("*").eq("id", id).maybeSingle(),
+        supabase
+          .from("recipe_ingredients")
+          .select("*")
+          .eq("recipe_id", id)
+          .order("sort_order"),
+        supabase
+          .from("recipe_ratings")
+          .select("user_id, score")
+          .eq("recipe_id", id),
+        supabase.from("households").select("servings").maybeSingle(),
+      ]);
 
       if (!active) return;
       if (!recipe) {
@@ -69,26 +87,12 @@ function RecipeDetail() {
         return;
       }
 
-      const [{ data: ingredients }, { data: ratings }, { data: household }] =
-        await Promise.all([
-          supabase
-            .from("recipe_ingredients")
-            .select("*")
-            .eq("recipe_id", id)
-            .order("sort_order"),
-          supabase
-            .from("recipe_ratings")
-            .select("user_id, score")
-            .eq("recipe_id", id),
-          supabase.from("households").select("servings").maybeSingle(),
-        ]);
-
-      if (!active) return;
       setData({
         recipe,
         ingredients: ingredients ?? [],
         servings: household?.servings ?? recipe.servings,
-        myScore: ratings?.find((r) => r.user_id === user?.id)?.score ?? null,
+        myScore:
+          ratings?.find((r) => r.user_id === session?.user.id)?.score ?? null,
       });
     })();
 

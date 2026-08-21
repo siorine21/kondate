@@ -38,6 +38,7 @@ type RecipeRow = {
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState<RecipeRow[] | null>(null);
   const [householdId, setHouseholdId] = useState<string | null>(null);
+  const [unlinked, setUnlinked] = useState(false);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -57,6 +58,10 @@ export default function RecipesPage() {
       setError("レシピを取得できませんでした。時間を置いて開き直してください。");
       return;
     }
+
+    /* 世帯に紐付いていない利用者は RLS が1行も返さない。
+       「レシピがない」と見分けがつかないので、ここで分けて伝える。 */
+    setUnlinked(!profile);
     setHouseholdId(profile?.household_id ?? null);
     setRecipes(rows ?? []);
   }, []);
@@ -77,6 +82,19 @@ export default function RecipesPage() {
           レシピ
         </h1>
       </header>
+
+      {unlinked ? (
+        <section className="mt-4 rounded-card border border-line bg-card p-4">
+          <p className="text-[13px] leading-[1.95] text-ink-2">
+            このアカウントはまだ世帯に紐付いていません。
+            <br />
+            紐付けるまで、レシピや献立は表示されません。
+          </p>
+          <p className="mt-2.5 text-[11.5px] leading-[1.85] text-ink-3">
+            はじめに設定した方に、このメールアドレスの紐付けを頼んでください。
+          </p>
+        </section>
+      ) : null}
 
       {householdId ? (
         <>
@@ -106,9 +124,9 @@ export default function RecipesPage() {
           <p className="mt-3 text-[12.5px] text-ink-3">読み込んでいます</p>
         ) : recipes.length === 0 ? (
           <p className="mt-3 text-[12.5px] leading-[1.9] text-ink-2">
-            レシピはまだありません。
-            <br />
-            登録すると献立を組めるようになります。
+            {unlinked
+              ? "世帯に紐付くと、登録済みのレシピが並びます。"
+              : "レシピはまだありません。登録すると献立を組めるようになります。"}
           </p>
         ) : (
           <ul>

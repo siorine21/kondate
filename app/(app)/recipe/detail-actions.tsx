@@ -25,9 +25,11 @@ export function RatingStars({
     setError("");
 
     const supabase = createClient();
+    /* 自分の行を書くための id。正しさは RLS が見る（仕様書 3.3）。 */
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      data: { session },
+    } = await supabase.auth.getSession();
+    const user = session?.user;
 
     if (!user) {
       setScore(previous);

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-import { SEED_RECIPES } from "@/lib/seed";
+import { SEED_RECIPE_NAMES } from "@/lib/seed-names";
+import type { SeedRecipe } from "@/lib/seed";
 import { createClient } from "@/lib/supabase/client";
 
 /* はじめの20品を読み込む（仕様書 11.1）。
@@ -24,15 +25,22 @@ export function SeedButton({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
-  const missing = SEED_RECIPES.filter(
-    (recipe) => !existingNames.includes(recipe.name),
+  const missingNames = SEED_RECIPE_NAMES.filter(
+    (name) => !existingNames.includes(name),
   );
 
-  if (missing.length === 0) return null;
+  if (missingNames.length === 0) return null;
 
   async function load() {
     setPending(true);
     setError("");
+
+    /* 材料と手順を含む本体はここで初めて読み込む。
+       押さない人には配らない（レシピ画面が 20KB 以上軽くなる）。 */
+    const { SEED_RECIPES } = await import("@/lib/seed");
+    const missing: SeedRecipe[] = SEED_RECIPES.filter((recipe) =>
+      missingNames.includes(recipe.name),
+    );
 
     const supabase = createClient();
 
@@ -124,7 +132,7 @@ export function SeedButton({
       {
         household_id: string;
         name: string;
-        shop_category: (typeof SEED_RECIPES)[number]["ingredients"][number]["shop_category"];
+        shop_category: SeedRecipe["ingredients"][number]["shop_category"];
         default_unit: string | null;
         is_pantry: boolean;
       }
@@ -155,7 +163,7 @@ export function SeedButton({
   return (
     <section className="mt-4 rounded-card border border-line bg-card p-4">
       <p className="font-mono text-[9.5px] tracking-[0.2em] text-ink-3">
-        はじめの{missing.length}品
+        はじめの{missingNames.length}品
       </p>
       <p className="mt-2 text-[12.5px] leading-[1.9] text-ink-2">
         主菜12・副菜5・汁物3をまとめて登録します。
@@ -168,7 +176,7 @@ export function SeedButton({
         onClick={load}
         type="button"
       >
-        {pending ? "読み込んでいます" : `${missing.length}品を読み込む`}
+        {pending ? "読み込んでいます" : `${missingNames.length}品を読み込む`}
       </button>
       {error ? (
         <p className="mt-2 text-[12px] text-meat" role="alert">

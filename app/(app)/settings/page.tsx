@@ -29,9 +29,10 @@ export default function SettingsPage() {
 
   const load = useCallback(async () => {
     const supabase = createClient();
+    /* 画面に出すメールアドレスを取るだけ。手元のセッションで足りる。 */
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      data: { session },
+    } = await supabase.auth.getSession();
 
     const [
       { data: household, error: householdError },
@@ -47,14 +48,23 @@ export default function SettingsPage() {
         .order("updated_at", { ascending: false }),
     ]);
 
-    if (householdError || !household) {
+    if (householdError) {
       setError("設定を読み込めませんでした。開き直してください。");
+      return;
+    }
+
+    /* 世帯に紐付いていないと RLS が1行も返さない。
+       読み込みの失敗と区別して伝える。 */
+    if (!household) {
+      setError(
+        "このアカウントはまだ世帯に紐付いていません。はじめに設定した方に、このメールアドレスの紐付けを頼んでください。",
+      );
       return;
     }
 
     setData({
       household,
-      email: user?.email ?? "",
+      email: session?.user.email ?? "",
       displayName: profile?.display_name ?? "",
       archived: archived ?? [],
     });

@@ -144,6 +144,17 @@ scripts/          DB 操作と検証のスクリプト
 `public/.nojekyll` は Jekyll による `_next/` の除外を止めるために必要です。
 消さないでください。
 
+### 2人目のアカウントを世帯に紐付ける
+
+**紐付けが無い利用者には、レシピが1件も見えません。** `profiles` に行が無いと
+`current_household_id()` が空になり、RLS が全テーブルで0行を返すためです
+（仕様書 3.3）。画面上は「レシピがない」と区別がつかないので、アプリ側でも
+「まだ世帯に紐付いていません」と出すようにしてあります。
+
+Supabase の SQL Editor で
+[`supabase/setup/05_add_member.sql`](supabase/setup/05_add_member.sql) を実行してください。
+`WIFE_EMAIL_HERE` を書き換える1箇所だけです。
+
 ### パスワード再設定のための設定
 
 Supabase の **Authentication → URL Configuration → Redirect URLs** に
