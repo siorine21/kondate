@@ -30,13 +30,6 @@ join households h on h.id = p.household_id;
 
 
 -- ============================================================
--- 妻のアカウントを作った後に、これだけ実行してください
+-- 2人目のアカウントを作った後は supabase/setup/05_add_member.sql を使ってください
 -- ============================================================
--- insert into profiles (user_id, household_id, display_name)
--- select u.id, h.id, '妻'
--- from auth.users u
--- cross join (select id from households where name = '我が家' limit 1) h
--- where u.email = 'WIFE_EMAIL_HERE'
--- on conflict (user_id) do update
---   set household_id = excluded.household_id,
---       display_name = excluded.display_name;
+-- 紐付けが無いと RLS が全テーブルで0行を返し、レシピが1件も見えません。
