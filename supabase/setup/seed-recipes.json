@@ -1,0 +1,1636 @@
+{
+  "_generated": "supabase/setup/04_seed_recipes.sql を PostgreSQL に流した結果を書き出したもの。手で編集しない。",
+  "recipes": [
+    {
+      "name": "きゅうりとわかめの酢の物",
+      "tags": [
+        "時短",
+        "作りおき可"
+      ],
+      "steps": [
+        "乾燥わかめを水で戻し、水気をきります。",
+        "きゅうりは薄い輪切りにし、塩をふって5分おきます。",
+        "きゅうりの水気を絞ります。",
+        "酢・砂糖・醤油を混ぜ、きゅうりとわかめを和えます。"
+      ],
+      "method": "raw",
+      "category": "washoku",
+      "servings": 2,
+      "dish_type": "side",
+      "food_groups": [
+        2,
+        4
+      ],
+      "ingredients": [
+        {
+          "qty": 1,
+          "name": "きゅうり",
+          "unit": "本",
+          "sort_order": 1,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 3,
+          "name": "乾燥わかめ",
+          "unit": "g",
+          "sort_order": 2,
+          "shop_category": "dry"
+        },
+        {
+          "qty": 2,
+          "name": "酢",
+          "unit": "大さじ",
+          "sort_order": 3,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "砂糖",
+          "unit": "大さじ",
+          "sort_order": 4,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 0.5,
+          "name": "醤油",
+          "unit": "小さじ",
+          "sort_order": 5,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": null,
+          "name": "塩",
+          "unit": null,
+          "sort_order": 6,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "none",
+      "cook_time_min": 10
+    },
+    {
+      "name": "もやしのナムル",
+      "tags": [
+        "時短"
+      ],
+      "steps": [
+        "もやしはひげ根が気になれば取り除きます。",
+        "熱湯で1分ゆで、ざるに上げて水気をきります。",
+        "ごま油・鶏がらスープの素・すりごま・おろしにんにく・塩を混ぜます。",
+        "もやしを和えます。"
+      ],
+      "method": "other",
+      "category": "chuka",
+      "servings": 2,
+      "dish_type": "side",
+      "food_groups": [
+        4,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 1,
+          "name": "もやし",
+          "unit": "袋",
+          "sort_order": 1,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 0.5,
+          "name": "にんにく",
+          "unit": "かけ",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "すりごま",
+          "unit": "大さじ",
+          "sort_order": 3,
+          "shop_category": "dry"
+        },
+        {
+          "qty": 1,
+          "name": "ごま油",
+          "unit": "大さじ",
+          "sort_order": 4,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 0.5,
+          "name": "鶏がらスープの素",
+          "unit": "小さじ",
+          "sort_order": 5,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": null,
+          "name": "塩",
+          "unit": null,
+          "sort_order": 6,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "none",
+      "cook_time_min": 10
+    },
+    {
+      "name": "ブロッコリーのごま和え",
+      "tags": [
+        "時短"
+      ],
+      "steps": [
+        "ブロッコリーは小房に分けます。",
+        "塩を入れた湯で2分ゆで、ざるに上げて冷まします。",
+        "すりごま・醤油・砂糖を混ぜ合わせます。",
+        "ブロッコリーを和えます。"
+      ],
+      "method": "other",
+      "category": "washoku",
+      "servings": 2,
+      "dish_type": "side",
+      "food_groups": [
+        3,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 1,
+          "name": "ブロッコリー",
+          "unit": "株",
+          "sort_order": 1,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 2,
+          "name": "すりごま",
+          "unit": "大さじ",
+          "sort_order": 2,
+          "shop_category": "dry"
+        },
+        {
+          "qty": 1,
+          "name": "醤油",
+          "unit": "大さじ",
+          "sort_order": 3,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "砂糖",
+          "unit": "小さじ",
+          "sort_order": 4,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "none",
+      "cook_time_min": 10
+    },
+    {
+      "name": "卵とトマトの中華スープ",
+      "tags": [
+        "時短"
+      ],
+      "steps": [
+        "トマトはくし切り、長ねぎは斜め薄切りにします。",
+        "水と鶏がらスープの素を煮立てます。",
+        "トマトを入れて1分煮ます。",
+        "溶き卵を細く回し入れ、ふんわり浮いたら火を止めます。",
+        "塩こしょうとごま油で味をととのえます。"
+      ],
+      "method": "simmer",
+      "category": "chuka",
+      "servings": 2,
+      "dish_type": "soup",
+      "food_groups": [
+        1,
+        3
+      ],
+      "ingredients": [
+        {
+          "qty": 1,
+          "name": "トマト",
+          "unit": "個",
+          "sort_order": 1,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 0.5,
+          "name": "長ねぎ",
+          "unit": "本",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "卵",
+          "unit": "個",
+          "sort_order": 3,
+          "shop_category": "dairy_egg"
+        },
+        {
+          "qty": 400,
+          "name": "水",
+          "unit": "ml",
+          "sort_order": 4,
+          "shop_category": "other"
+        },
+        {
+          "qty": 2,
+          "name": "鶏がらスープの素",
+          "unit": "小さじ",
+          "sort_order": 5,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "ごま油",
+          "unit": "小さじ",
+          "sort_order": 6,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": null,
+          "name": "塩",
+          "unit": null,
+          "sort_order": 7,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": null,
+          "name": "こしょう",
+          "unit": null,
+          "sort_order": 8,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "none",
+      "cook_time_min": 10
+    },
+    {
+      "name": "小松菜とにんじんのおひたし",
+      "tags": [
+        "時短",
+        "作りおき可"
+      ],
+      "steps": [
+        "小松菜は根元を切り、にんじんは細切りにします。",
+        "鍋に湯を沸かし、にんじん、小松菜の順にゆでます。",
+        "冷水にとって水気をしっかり絞り、4cm長さに切ります。",
+        "醤油とだしの素で和え、かつお節をのせます。"
+      ],
+      "method": "other",
+      "category": "washoku",
+      "servings": 2,
+      "dish_type": "side",
+      "food_groups": [
+        2,
+        3
+      ],
+      "ingredients": [
+        {
+          "qty": 1,
+          "name": "小松菜",
+          "unit": "束",
+          "sort_order": 1,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 0.5,
+          "name": "にんじん",
+          "unit": "本",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "かつお節",
+          "unit": "パック",
+          "sort_order": 3,
+          "shop_category": "dry"
+        },
+        {
+          "qty": 1,
+          "name": "醤油",
+          "unit": "大さじ",
+          "sort_order": 4,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "だしの素",
+          "unit": "小さじ",
+          "sort_order": 5,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "none",
+      "cook_time_min": 10
+    },
+    {
+      "name": "豆腐とわかめの味噌汁",
+      "tags": [
+        "時短"
+      ],
+      "steps": [
+        "乾燥わかめを水で戻します。",
+        "豆腐は1.5cm角に切り、長ねぎは小口切りにします。",
+        "だし汁を煮立て、豆腐とわかめを入れます。",
+        "火を弱めて味噌を溶き入れ、長ねぎを加えて火を止めます。"
+      ],
+      "method": "simmer",
+      "category": "washoku",
+      "servings": 2,
+      "dish_type": "soup",
+      "food_groups": [
+        1,
+        2
+      ],
+      "ingredients": [
+        {
+          "qty": 0.5,
+          "name": "木綿豆腐",
+          "unit": "丁",
+          "sort_order": 1,
+          "shop_category": "tofu"
+        },
+        {
+          "qty": 0.5,
+          "name": "長ねぎ",
+          "unit": "本",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 2,
+          "name": "乾燥わかめ",
+          "unit": "g",
+          "sort_order": 3,
+          "shop_category": "dry"
+        },
+        {
+          "qty": 400,
+          "name": "だし汁",
+          "unit": "ml",
+          "sort_order": 4,
+          "shop_category": "other"
+        },
+        {
+          "qty": 2,
+          "name": "味噌",
+          "unit": "大さじ",
+          "sort_order": 5,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "none",
+      "cook_time_min": 10
+    },
+    {
+      "name": "ほうれん草の白和え",
+      "tags": [
+        "作りおき可"
+      ],
+      "steps": [
+        "豆腐はキッチンペーパーで包み、10分ほど水切りします。",
+        "ほうれん草はゆでて水気を絞り、4cm長さに切ります。",
+        "にんじんは細切りにしてさっとゆでます。",
+        "豆腐をすり鉢でなめらかにし、すりごま・砂糖・醤油・塩を混ぜます。",
+        "ほうれん草とにんじんを加えて和えます。"
+      ],
+      "method": "other",
+      "category": "washoku",
+      "servings": 2,
+      "dish_type": "side",
+      "food_groups": [
+        1,
+        3,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 1,
+          "name": "ほうれん草",
+          "unit": "束",
+          "sort_order": 1,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 0.3,
+          "name": "にんじん",
+          "unit": "本",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 0.5,
+          "name": "木綿豆腐",
+          "unit": "丁",
+          "sort_order": 3,
+          "shop_category": "tofu"
+        },
+        {
+          "qty": 1,
+          "name": "すりごま",
+          "unit": "大さじ",
+          "sort_order": 4,
+          "shop_category": "dry"
+        },
+        {
+          "qty": 1,
+          "name": "砂糖",
+          "unit": "大さじ",
+          "sort_order": 5,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 0.5,
+          "name": "醤油",
+          "unit": "大さじ",
+          "sort_order": 6,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": null,
+          "name": "塩",
+          "unit": null,
+          "sort_order": 7,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "soy",
+      "cook_time_min": 15
+    },
+    {
+      "name": "大根と油揚げの味噌汁",
+      "tags": [],
+      "steps": [
+        "大根はいちょう切り、油揚げは短冊切りにします。",
+        "油揚げは熱湯をかけて油抜きします。",
+        "だし汁に大根を入れ、やわらかくなるまで煮ます。",
+        "油揚げを加えてひと煮立ちさせます。",
+        "火を弱めて味噌を溶き入れ、万能ねぎを散らします。"
+      ],
+      "method": "simmer",
+      "category": "washoku",
+      "servings": 2,
+      "dish_type": "soup",
+      "food_groups": [
+        1,
+        3,
+        4
+      ],
+      "ingredients": [
+        {
+          "qty": 100,
+          "name": "大根",
+          "unit": "g",
+          "sort_order": 1,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "万能ねぎ",
+          "unit": "本",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "油揚げ",
+          "unit": "枚",
+          "sort_order": 3,
+          "shop_category": "tofu"
+        },
+        {
+          "qty": 400,
+          "name": "だし汁",
+          "unit": "ml",
+          "sort_order": 4,
+          "shop_category": "other"
+        },
+        {
+          "qty": 2,
+          "name": "味噌",
+          "unit": "大さじ",
+          "sort_order": 5,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "none",
+      "cook_time_min": 15
+    },
+    {
+      "name": "ぶりの照り焼き",
+      "tags": [
+        "時短"
+      ],
+      "steps": [
+        "ぶりは水気を拭き取ります。",
+        "醤油・みりん・酒・砂糖を混ぜ合わせておきます。",
+        "フライパンに油を熱し、ぶりを両面焼きます。",
+        "ししとうも一緒に焼いて取り出します。",
+        "合わせ調味料を加え、とろみがつくまでぶりにからめます。"
+      ],
+      "method": "grill",
+      "category": "washoku",
+      "servings": 2,
+      "dish_type": "main",
+      "food_groups": [
+        1,
+        3,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 2,
+          "name": "ぶり",
+          "unit": "切れ",
+          "sort_order": 1,
+          "shop_category": "seafood"
+        },
+        {
+          "qty": 4,
+          "name": "ししとう",
+          "unit": "本",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 2,
+          "name": "醤油",
+          "unit": "大さじ",
+          "sort_order": 3,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 2,
+          "name": "みりん",
+          "unit": "大さじ",
+          "sort_order": 4,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 2,
+          "name": "酒",
+          "unit": "大さじ",
+          "sort_order": 5,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "砂糖",
+          "unit": "大さじ",
+          "sort_order": 6,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 0.5,
+          "name": "サラダ油",
+          "unit": "大さじ",
+          "sort_order": 7,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "fish",
+      "cook_time_min": 20
+    },
+    {
+      "name": "厚揚げと豚肉の味噌炒め",
+      "tags": [
+        "時短"
+      ],
+      "steps": [
+        "厚揚げは食べやすく切り、キャベツはざく切りにします。",
+        "ピーマンは細切りにします。",
+        "味噌・みりん・醤油・砂糖を混ぜ合わせておきます。",
+        "フライパンに油を熱し、豚肉を炒めます。",
+        "厚揚げとキャベツを加えて炒め、ピーマンを入れます。",
+        "合わせ調味料を加えて全体にからめます。"
+      ],
+      "method": "stirfry",
+      "category": "chuka",
+      "servings": 2,
+      "dish_type": "main",
+      "food_groups": [
+        1,
+        3,
+        4,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 1,
+          "name": "厚揚げ",
+          "unit": "枚",
+          "sort_order": 1,
+          "shop_category": "tofu"
+        },
+        {
+          "qty": 150,
+          "name": "豚こま切れ肉",
+          "unit": "g",
+          "sort_order": 2,
+          "shop_category": "meat"
+        },
+        {
+          "qty": 3,
+          "name": "キャベツ",
+          "unit": "枚",
+          "sort_order": 3,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 2,
+          "name": "ピーマン",
+          "unit": "個",
+          "sort_order": 4,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1.5,
+          "name": "味噌",
+          "unit": "大さじ",
+          "sort_order": 5,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "みりん",
+          "unit": "大さじ",
+          "sort_order": 6,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 0.5,
+          "name": "醤油",
+          "unit": "大さじ",
+          "sort_order": 7,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 0.5,
+          "name": "砂糖",
+          "unit": "大さじ",
+          "sort_order": 8,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "サラダ油",
+          "unit": "大さじ",
+          "sort_order": 9,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "soy",
+      "cook_time_min": 20
+    },
+    {
+      "name": "白身魚のムニエル",
+      "tags": [
+        "時短"
+      ],
+      "steps": [
+        "たらは水気を拭き、塩こしょうをふります。",
+        "小麦粉を薄くまぶします。",
+        "ブロッコリーは小房に分けて塩ゆでします。",
+        "フライパンにバターを溶かし、たらを両面焼きます。",
+        "皿に盛り、レモンとブロッコリーを添えます。"
+      ],
+      "method": "grill",
+      "category": "yoshoku",
+      "servings": 2,
+      "dish_type": "main",
+      "food_groups": [
+        1,
+        3,
+        5,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 2,
+          "name": "たら",
+          "unit": "切れ",
+          "sort_order": 1,
+          "shop_category": "seafood"
+        },
+        {
+          "qty": 4,
+          "name": "ブロッコリー",
+          "unit": "房",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 0.5,
+          "name": "レモン",
+          "unit": "個",
+          "sort_order": 3,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 15,
+          "name": "バター",
+          "unit": "g",
+          "sort_order": 4,
+          "shop_category": "dairy_egg"
+        },
+        {
+          "qty": 2,
+          "name": "小麦粉",
+          "unit": "大さじ",
+          "sort_order": 5,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": null,
+          "name": "塩",
+          "unit": null,
+          "sort_order": 6,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": null,
+          "name": "こしょう",
+          "unit": null,
+          "sort_order": 7,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "fish",
+      "cook_time_min": 20
+    },
+    {
+      "name": "豚肉と夏野菜の生姜焼き",
+      "tags": [
+        "時短"
+      ],
+      "steps": [
+        "なすは半月切り、ピーマンは細切り、玉ねぎはくし切りにします。",
+        "しょうがはすりおろし、醤油・みりん・酒・砂糖と混ぜます。",
+        "フライパンに油を熱し、なすと玉ねぎを先に炒めます。",
+        "豚肉を加えて色が変わるまで炒め、ピーマンを入れます。",
+        "合わせ調味料を回し入れ、汁気がなくなるまで炒め合わせます。"
+      ],
+      "method": "stirfry",
+      "category": "washoku",
+      "servings": 2,
+      "dish_type": "main",
+      "food_groups": [
+        1,
+        3,
+        4,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 250,
+          "name": "豚ロース薄切り肉",
+          "unit": "g",
+          "sort_order": 1,
+          "shop_category": "meat"
+        },
+        {
+          "qty": 1,
+          "name": "なす",
+          "unit": "本",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 2,
+          "name": "ピーマン",
+          "unit": "個",
+          "sort_order": 3,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 0.5,
+          "name": "玉ねぎ",
+          "unit": "個",
+          "sort_order": 4,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "しょうが",
+          "unit": "かけ",
+          "sort_order": 5,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 2,
+          "name": "醤油",
+          "unit": "大さじ",
+          "sort_order": 6,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 2,
+          "name": "みりん",
+          "unit": "大さじ",
+          "sort_order": 7,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "酒",
+          "unit": "大さじ",
+          "sort_order": 8,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 0.5,
+          "name": "砂糖",
+          "unit": "大さじ",
+          "sort_order": 9,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "サラダ油",
+          "unit": "大さじ",
+          "sort_order": 10,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "meat",
+      "cook_time_min": 20
+    },
+    {
+      "name": "鶏むね肉の甘酢炒め",
+      "tags": [
+        "時短"
+      ],
+      "steps": [
+        "鶏むね肉はひと口大のそぎ切りにし、片栗粉をまぶします。",
+        "玉ねぎはくし切り、ピーマンとにんじんは細切りにします。",
+        "酢・砂糖・醤油・ケチャップを混ぜ合わせておきます。",
+        "フライパンに油を熱し、鶏肉を両面焼いて取り出します。",
+        "同じフライパンで野菜を炒め、鶏肉を戻して合わせ調味料をからめます。"
+      ],
+      "method": "stirfry",
+      "category": "chuka",
+      "servings": 2,
+      "dish_type": "main",
+      "food_groups": [
+        1,
+        3,
+        4,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 250,
+          "name": "鶏むね肉",
+          "unit": "g",
+          "sort_order": 1,
+          "shop_category": "meat"
+        },
+        {
+          "qty": 0.5,
+          "name": "玉ねぎ",
+          "unit": "個",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 2,
+          "name": "ピーマン",
+          "unit": "個",
+          "sort_order": 3,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 0.5,
+          "name": "にんじん",
+          "unit": "本",
+          "sort_order": 4,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "片栗粉",
+          "unit": "大さじ",
+          "sort_order": 5,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 2,
+          "name": "酢",
+          "unit": "大さじ",
+          "sort_order": 6,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1.5,
+          "name": "砂糖",
+          "unit": "大さじ",
+          "sort_order": 7,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1.5,
+          "name": "醤油",
+          "unit": "大さじ",
+          "sort_order": 8,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "トマトケチャップ",
+          "unit": "大さじ",
+          "sort_order": 9,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "サラダ油",
+          "unit": "大さじ",
+          "sort_order": 10,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "meat",
+      "cook_time_min": 20
+    },
+    {
+      "name": "だし巻き卵と鶏そぼろ丼",
+      "tags": [],
+      "steps": [
+        "鶏ひき肉を鍋に入れ、醤油・みりん・砂糖・おろししょうがを加えます。",
+        "火にかけ、菜箸で混ぜながらそぼろ状に炒りつけます。",
+        "卵を溶き、だし汁と塩少々を加えて混ぜます。",
+        "卵焼き器に油を薄くひき、数回に分けて卵液を流し巻きます。",
+        "だし巻き卵を食べやすく切ります。",
+        "ごはんにそぼろとだし巻き卵をのせ、万能ねぎを散らします。"
+      ],
+      "method": "other",
+      "category": "washoku",
+      "servings": 2,
+      "dish_type": "main",
+      "food_groups": [
+        1,
+        3,
+        5,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 4,
+          "name": "卵",
+          "unit": "個",
+          "sort_order": 1,
+          "shop_category": "dairy_egg"
+        },
+        {
+          "qty": 150,
+          "name": "鶏ひき肉",
+          "unit": "g",
+          "sort_order": 2,
+          "shop_category": "meat"
+        },
+        {
+          "qty": 1,
+          "name": "しょうが",
+          "unit": "かけ",
+          "sort_order": 3,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 2,
+          "name": "万能ねぎ",
+          "unit": "本",
+          "sort_order": 4,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 2,
+          "name": "ごはん",
+          "unit": "杯",
+          "sort_order": 5,
+          "shop_category": "other"
+        },
+        {
+          "qty": 100,
+          "name": "だし汁",
+          "unit": "ml",
+          "sort_order": 6,
+          "shop_category": "other"
+        },
+        {
+          "qty": 1.5,
+          "name": "醤油",
+          "unit": "大さじ",
+          "sort_order": 7,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1.5,
+          "name": "みりん",
+          "unit": "大さじ",
+          "sort_order": 8,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "砂糖",
+          "unit": "大さじ",
+          "sort_order": 9,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "サラダ油",
+          "unit": "大さじ",
+          "sort_order": 10,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "egg",
+      "cook_time_min": 25
+    },
+    {
+      "name": "鮭のちゃんちゃん焼き",
+      "tags": [],
+      "steps": [
+        "キャベツはざく切り、にんじんは短冊切り、玉ねぎは薄切りにします。",
+        "ピーマンは細切りにします。",
+        "味噌・みりん・酒・砂糖を混ぜ合わせておきます。",
+        "フライパンに野菜を敷き、鮭をのせます。",
+        "合わせ調味料をかけ、ふたをして中火で10分ほど蒸し焼きにします。",
+        "仕上げにバターをのせ、全体を混ぜ合わせます。"
+      ],
+      "method": "grill",
+      "category": "washoku",
+      "servings": 2,
+      "dish_type": "main",
+      "food_groups": [
+        1,
+        3,
+        4,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 2,
+          "name": "生鮭",
+          "unit": "切れ",
+          "sort_order": 1,
+          "shop_category": "seafood"
+        },
+        {
+          "qty": 3,
+          "name": "キャベツ",
+          "unit": "枚",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 0.5,
+          "name": "にんじん",
+          "unit": "本",
+          "sort_order": 3,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 0.5,
+          "name": "玉ねぎ",
+          "unit": "個",
+          "sort_order": 4,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "ピーマン",
+          "unit": "個",
+          "sort_order": 5,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 10,
+          "name": "バター",
+          "unit": "g",
+          "sort_order": 6,
+          "shop_category": "dairy_egg"
+        },
+        {
+          "qty": 2,
+          "name": "味噌",
+          "unit": "大さじ",
+          "sort_order": 7,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "みりん",
+          "unit": "大さじ",
+          "sort_order": 8,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "酒",
+          "unit": "大さじ",
+          "sort_order": 9,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "砂糖",
+          "unit": "大さじ",
+          "sort_order": 10,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "fish",
+      "cook_time_min": 25
+    },
+    {
+      "name": "鶏の照り焼き",
+      "tags": [
+        "作りおき可"
+      ],
+      "steps": [
+        "鶏もも肉は厚みをそろえ、フォークで数か所刺します。",
+        "醤油・みりん・酒・砂糖を混ぜ合わせておきます。",
+        "フライパンに油を熱し、皮目から中火で焼きます。",
+        "焼き色がついたら裏返し、ふたをして5分ほど蒸し焼きにします。",
+        "余分な脂を拭き、合わせ調味料を加えてからめます。",
+        "食べやすく切り、せん切りキャベツを添えます。"
+      ],
+      "method": "grill",
+      "category": "washoku",
+      "servings": 2,
+      "dish_type": "main",
+      "food_groups": [
+        1,
+        4,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 2,
+          "name": "鶏もも肉",
+          "unit": "枚",
+          "sort_order": 1,
+          "shop_category": "meat"
+        },
+        {
+          "qty": 2,
+          "name": "キャベツ",
+          "unit": "枚",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 2,
+          "name": "醤油",
+          "unit": "大さじ",
+          "sort_order": 3,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 2,
+          "name": "みりん",
+          "unit": "大さじ",
+          "sort_order": 4,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "酒",
+          "unit": "大さじ",
+          "sort_order": 5,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "砂糖",
+          "unit": "大さじ",
+          "sort_order": 6,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 0.5,
+          "name": "サラダ油",
+          "unit": "大さじ",
+          "sort_order": 7,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "meat",
+      "cook_time_min": 25
+    },
+    {
+      "name": "麻婆豆腐",
+      "tags": [],
+      "steps": [
+        "豆腐は2cm角に切り、熱湯でさっとゆでて水気をきります。",
+        "長ねぎ・にんにく・しょうがはみじん切りにします。",
+        "フライパンにごま油を熱し、にんにくとしょうがを炒めます。",
+        "ひき肉を加えて色が変わるまで炒め、豆板醤と味噌を加えます。",
+        "水・醤油・酒・鶏がらスープの素を加えて煮立てます。",
+        "豆腐を入れて3分煮て、水溶き片栗粉でとろみをつけます。",
+        "長ねぎを散らします。"
+      ],
+      "method": "stirfry",
+      "category": "chuka",
+      "servings": 2,
+      "dish_type": "main",
+      "food_groups": [
+        1,
+        4,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 1,
+          "name": "木綿豆腐",
+          "unit": "丁",
+          "sort_order": 1,
+          "shop_category": "tofu"
+        },
+        {
+          "qty": 150,
+          "name": "豚ひき肉",
+          "unit": "g",
+          "sort_order": 2,
+          "shop_category": "meat"
+        },
+        {
+          "qty": 1,
+          "name": "長ねぎ",
+          "unit": "本",
+          "sort_order": 3,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "にんにく",
+          "unit": "かけ",
+          "sort_order": 4,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "しょうが",
+          "unit": "かけ",
+          "sort_order": 5,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 200,
+          "name": "水",
+          "unit": "ml",
+          "sort_order": 6,
+          "shop_category": "other"
+        },
+        {
+          "qty": 1,
+          "name": "豆板醤",
+          "unit": "小さじ",
+          "sort_order": 7,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "味噌",
+          "unit": "大さじ",
+          "sort_order": 8,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "醤油",
+          "unit": "大さじ",
+          "sort_order": 9,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "酒",
+          "unit": "大さじ",
+          "sort_order": 10,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "鶏がらスープの素",
+          "unit": "小さじ",
+          "sort_order": 11,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "片栗粉",
+          "unit": "大さじ",
+          "sort_order": 12,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "ごま油",
+          "unit": "小さじ",
+          "sort_order": 13,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "soy",
+      "cook_time_min": 25
+    },
+    {
+      "name": "あじの南蛮漬け",
+      "tags": [
+        "揚げ物",
+        "作りおき可"
+      ],
+      "steps": [
+        "玉ねぎは薄切り、にんじんとピーマンは細切りにします。",
+        "酢・砂糖・醤油を混ぜ、切った野菜を漬けておきます。",
+        "あじは三枚におろすか、開いたものを用意します。",
+        "あじに片栗粉をまぶします。",
+        "170度の油で3分ほど揚げます。",
+        "揚げたてを漬け汁に入れ、15分以上なじませます。"
+      ],
+      "method": "fry",
+      "category": "washoku",
+      "servings": 2,
+      "dish_type": "main",
+      "food_groups": [
+        1,
+        3,
+        4,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 4,
+          "name": "あじ",
+          "unit": "尾",
+          "sort_order": 1,
+          "shop_category": "seafood"
+        },
+        {
+          "qty": 0.5,
+          "name": "玉ねぎ",
+          "unit": "個",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 0.5,
+          "name": "にんじん",
+          "unit": "本",
+          "sort_order": 3,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "ピーマン",
+          "unit": "個",
+          "sort_order": 4,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 3,
+          "name": "片栗粉",
+          "unit": "大さじ",
+          "sort_order": 5,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 4,
+          "name": "酢",
+          "unit": "大さじ",
+          "sort_order": 6,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 2,
+          "name": "砂糖",
+          "unit": "大さじ",
+          "sort_order": 7,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 2,
+          "name": "醤油",
+          "unit": "大さじ",
+          "sort_order": 8,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": null,
+          "name": "揚げ油",
+          "unit": null,
+          "sort_order": 9,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "fish",
+      "cook_time_min": 30
+    },
+    {
+      "name": "なすとひき肉のキーマカレー",
+      "tags": [
+        "作りおき可"
+      ],
+      "steps": [
+        "玉ねぎ・にんじん・なすを1cm角に切ります。",
+        "にんにくとしょうがはみじん切りにします。",
+        "鍋に油を熱し、にんにくとしょうがを炒めて香りを出します。",
+        "玉ねぎとにんじんを加え、しんなりするまで炒めます。",
+        "ひき肉を加えて色が変わるまで炒め、なすを入れます。",
+        "カレー粉を加えて全体になじませます。",
+        "トマト缶とウスターソースを加え、15分ほど煮ます。",
+        "塩で味をととのえます。"
+      ],
+      "method": "simmer",
+      "category": "yoshoku",
+      "servings": 2,
+      "dish_type": "main",
+      "food_groups": [
+        1,
+        3,
+        4,
+        5,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 250,
+          "name": "合いびき肉",
+          "unit": "g",
+          "sort_order": 1,
+          "shop_category": "meat"
+        },
+        {
+          "qty": 2,
+          "name": "なす",
+          "unit": "本",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "玉ねぎ",
+          "unit": "個",
+          "sort_order": 3,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 0.5,
+          "name": "にんじん",
+          "unit": "本",
+          "sort_order": 4,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "にんにく",
+          "unit": "かけ",
+          "sort_order": 5,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "しょうが",
+          "unit": "かけ",
+          "sort_order": 6,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 200,
+          "name": "カットトマト缶",
+          "unit": "g",
+          "sort_order": 7,
+          "shop_category": "other"
+        },
+        {
+          "qty": 1,
+          "name": "カレー粉",
+          "unit": "大さじ",
+          "sort_order": 8,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "ウスターソース",
+          "unit": "大さじ",
+          "sort_order": 9,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "サラダ油",
+          "unit": "大さじ",
+          "sort_order": 10,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": null,
+          "name": "塩",
+          "unit": null,
+          "sort_order": 11,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "meat",
+      "cook_time_min": 35
+    },
+    {
+      "name": "鶏肉のトマト煮込み",
+      "tags": [
+        "作りおき可"
+      ],
+      "steps": [
+        "鶏もも肉はひと口大に切り、塩こしょうをふります。",
+        "玉ねぎはくし切り、にんじんは乱切り、にんにくは薄切りにします。",
+        "鍋にオリーブオイルを熱し、鶏肉を皮目から焼きます。",
+        "焼き色がついたら野菜とにんにくを加えて炒めます。",
+        "トマト缶とローリエを加え、ふたをして20分煮ます。",
+        "塩こしょうで味をととのえます。"
+      ],
+      "method": "simmer",
+      "category": "yoshoku",
+      "servings": 2,
+      "dish_type": "main",
+      "food_groups": [
+        1,
+        3,
+        4,
+        6
+      ],
+      "ingredients": [
+        {
+          "qty": 2,
+          "name": "鶏もも肉",
+          "unit": "枚",
+          "sort_order": 1,
+          "shop_category": "meat"
+        },
+        {
+          "qty": 1,
+          "name": "玉ねぎ",
+          "unit": "個",
+          "sort_order": 2,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 0.5,
+          "name": "にんじん",
+          "unit": "本",
+          "sort_order": 3,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 1,
+          "name": "にんにく",
+          "unit": "かけ",
+          "sort_order": 4,
+          "shop_category": "produce"
+        },
+        {
+          "qty": 400,
+          "name": "カットトマト缶",
+          "unit": "g",
+          "sort_order": 5,
+          "shop_category": "other"
+        },
+        {
+          "qty": 1,
+          "name": "オリーブオイル",
+          "unit": "大さじ",
+          "sort_order": 6,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": 1,
+          "name": "ローリエ",
+          "unit": "枚",
+          "sort_order": 7,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": null,
+          "name": "塩",
+          "unit": null,
+          "sort_order": 8,
+          "shop_category": "seasoning"
+        },
+        {
+          "qty": null,
+          "name": "こしょう",
+          "unit": null,
+          "sort_order": 9,
+          "shop_category": "seasoning"
+        }
+      ],
+      "main_protein": "meat",
+      "cook_time_min": 35
+    }
+  ]
+}
