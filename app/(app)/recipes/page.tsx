@@ -1,39 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
-import {
-  CATEGORY_LABEL,
-  DISH_TYPE_LABEL,
-  PROTEIN_BG,
-  PROTEIN_LABEL,
-} from "@/lib/labels";
-import { createClient } from "@/lib/supabase/client";
-import type {
-  DishType,
-  MainProtein,
-  RecipeCategory,
-} from "@/lib/supabase/types";
-
 import { BackLink } from "@/app/(app)/back-link";
+import { createClient } from "@/lib/supabase/client";
 
 import { RecipeForm } from "./recipe-form";
+import { RecipeGroups, type RecipeRow } from "./recipe-groups";
 import { SeedButton } from "./seed-button";
 
 /* レシピ管理（仕様書 5.2-8）。
 
    ブラウザから直接 Supabase を読む。世帯の絞り込みは書かない。
    RLS が行うため（仕様書 3.3）。 */
-
-type RecipeRow = {
-  id: string;
-  name: string;
-  category: RecipeCategory;
-  dish_type: DishType;
-  main_protein: MainProtein;
-  cook_time_min: number;
-};
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState<RecipeRow[] | null>(null);
@@ -129,33 +108,7 @@ export default function RecipesPage() {
               : "レシピはまだありません。登録すると献立を組めるようになります。"}
           </p>
         ) : (
-          <ul>
-            {recipes.map((recipe) => (
-              <li key={recipe.id}>
-                <Link
-                  className="flex items-center gap-3 border-b border-line py-[13px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-                  href={`/recipe/?id=${recipe.id}`}
-                >
-                  <span
-                    className={`flex h-[38px] w-[38px] flex-shrink-0 items-center justify-center rounded-[9px] font-mono text-[10px] text-white ${PROTEIN_BG[recipe.main_protein]}`}
-                  >
-                    {PROTEIN_LABEL[recipe.main_protein]}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[14.5px] font-medium">
-                      {recipe.name}
-                    </span>
-                    <span className="mt-[3px] block font-mono text-[10.5px] text-ink-3">
-                      {CATEGORY_LABEL[recipe.category]} ·{" "}
-                      {DISH_TYPE_LABEL[recipe.dish_type]} ·{" "}
-                      {recipe.cook_time_min}分
-                    </span>
-                  </span>
-                  <span className="ml-auto pl-2 text-[17px] text-line">›</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <RecipeGroups recipes={recipes} />
         )}
       </section>
     </main>
