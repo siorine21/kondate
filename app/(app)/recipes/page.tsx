@@ -23,9 +23,20 @@ export default function RecipesPage() {
   const load = useCallback(async () => {
     const supabase = createClient();
 
+    /* profiles には世帯の全員が並ぶ。自分の行を指定しないと、
+       2人目が増えた時点で maybeSingle が「1行に絞れない」で落ちる。 */
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const userId = session?.user.id ?? "";
+
     const [{ data: profile }, { data: rows, error: loadError }] =
       await Promise.all([
-        supabase.from("profiles").select("household_id").maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("household_id")
+          .eq("user_id", userId)
+          .maybeSingle(),
         supabase
           .from("recipes")
           .select("id, name, category, dish_type, main_protein, cook_time_min")

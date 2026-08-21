@@ -43,7 +43,9 @@ const CATEGORY_ORDER: readonly RecipeCategory[] = [
 
 export function RecipeGroups({ recipes }: { recipes: readonly RecipeRow[] }) {
   const [groupBy, setGroupBy] = useState<GroupBy>("dish_type");
-  const [closed, setClosed] = useState<readonly string[]>([]);
+  /* 最初は畳んでおく。21件が一列に並ぶと全体が見えないため。
+     開いているものだけを持つので、既定は空になる。 */
+  const [opened, setOpened] = useState<readonly string[]>([]);
 
   const keys = groupBy === "dish_type" ? DISH_TYPE_ORDER : CATEGORY_ORDER;
   const label = (key: string) =>
@@ -60,14 +62,14 @@ export function RecipeGroups({ recipes }: { recipes: readonly RecipeRow[] }) {
     .filter((group) => group.rows.length > 0);
 
   function toggle(key: string) {
-    setClosed((current) =>
+    setOpened((current) =>
       current.includes(key)
         ? current.filter((k) => k !== key)
         : [...current, key],
     );
   }
 
-  const allClosed = closed.length === groups.length;
+  const allOpen = opened.length === groups.length;
 
   return (
     <>
@@ -75,23 +77,23 @@ export function RecipeGroups({ recipes }: { recipes: readonly RecipeRow[] }) {
         <Switch
           onChange={(next) => {
             setGroupBy(next);
-            setClosed([]); // 分け方を変えたら畳んだ状態は持ち越さない
+            setOpened([]); // 分け方を変えたら開き具合は持ち越さない
           }}
           value={groupBy}
         />
         <button
           className="ml-auto min-h-[38px] px-2 font-mono text-[10px] tracking-[0.12em] text-ai focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           onClick={() =>
-            setClosed(allClosed ? [] : groups.map((group) => group.key))
+            setOpened(allOpen ? [] : groups.map((group) => group.key))
           }
           type="button"
         >
-          {allClosed ? "すべて開く" : "すべて畳む"}
+          {allOpen ? "すべて畳む" : "すべて開く"}
         </button>
       </div>
 
       {groups.map((group) => {
-        const open = !closed.includes(group.key);
+        const open = opened.includes(group.key);
         const panelId = `group-${group.key}`;
 
         return (

@@ -40,7 +40,13 @@ export default function SettingsPage() {
       { data: archived },
     ] = await Promise.all([
       supabase.from("households").select("*").maybeSingle(),
-      supabase.from("profiles").select("display_name").maybeSingle(),
+      /* 世帯の全員が並ぶので、自分の行を指定する。
+         指定しないと2人目が増えた時点で1行に絞れず落ちる。 */
+      supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", session?.user.id ?? "")
+        .maybeSingle(),
       supabase
         .from("recipes")
         .select("id, name")
