@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
+import { BackLink } from "@/app/(app)/back-link";
 import {
   CATEGORY_LABEL_LONG,
   DISH_TYPE_LABEL,
@@ -100,7 +100,7 @@ function RecipeDetail() {
   if (notFound) {
     return (
       <main className="mx-auto w-full max-w-[430px] px-5 pb-20">
-        <BackLink />
+        <BackLink href="/recipes/">レシピ</BackLink>
         <p className="mt-6 text-[13px] leading-[1.9] text-ink-2">
           レシピが見つかりません。一覧から選び直してください。
         </p>
@@ -114,7 +114,7 @@ function RecipeDetail() {
 
   return (
     <main className="mx-auto w-full max-w-[430px] px-5 pb-20">
-      <BackLink />
+      <BackLink href="/recipes/">レシピ</BackLink>
 
       <header className="pb-[18px]">
         <p className="font-mono text-[9.5px] tracking-[0.2em] text-ink-3">
@@ -135,18 +135,22 @@ function RecipeDetail() {
         </div>
 
         {recipe.main_protein !== "none" ? (
-          <div className="mt-[13px] flex items-center gap-2">
-            <span
-              className={`inline-block h-[7px] w-[7px] rounded-full ${PROTEIN_BG[recipe.main_protein]}`}
-            />
-            <span className="text-[11px] text-ink-3">
-              たんぱく源：{PROTEIN_LABEL[recipe.main_protein]}
-            </span>
-            <span className="ml-auto text-[10.5px] text-ink-3">
+          /* 食品群の名前は長い。横に並べると折り返して読めなくなるため、
+             たんぱく源の下に置く。 */
+          <div className="mt-[13px]">
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-block h-[7px] w-[7px] rounded-full ${PROTEIN_BG[recipe.main_protein]}`}
+              />
+              <span className="text-[11px] text-ink-3">
+                たんぱく源：{PROTEIN_LABEL[recipe.main_protein]}
+              </span>
+            </div>
+            <p className="mt-1.5 text-[10.5px] leading-[1.75] text-ink-3">
               {recipe.food_groups
                 .map((g) => FOOD_GROUP_LABEL[g] ?? `${g}群`)
                 .join(" · ")}
-            </span>
+            </p>
           </div>
         ) : null}
       </header>
@@ -217,17 +221,6 @@ function RecipeDetail() {
         <ArchiveButton recipeId={recipe.id} />
       </div>
     </main>
-  );
-}
-
-function BackLink() {
-  return (
-    <Link
-      className="inline-flex items-center gap-[7px] py-2.5 font-mono text-[10px] tracking-[0.14em] text-ink-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-      href="/recipes/"
-    >
-      ‹ &nbsp;もどる
-    </Link>
   );
 }
 

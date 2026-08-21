@@ -1,0 +1,102 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+
+import { BackLink } from "@/app/(app)/back-link";
+import { createClient } from "@/lib/supabase/client";
+import type { Household } from "@/lib/supabase/types";
+
+import { AccountSection } from "./account";
+import { ArchivedSection } from "./archived";
+import { InstallSection } from "./install";
+import { PlanSection } from "./plan";
+
+/* 設定（仕様書 5.2-9）。
+
+   仕様書 12章では Phase 7 の作業だが、依頼者の指示により先に作る。
+   世帯の値は献立生成に効くため、Phase 3 に入る前に触れる形にしておく。 */
+
+type Loaded = {
+  household: Household;
+  email: string;
+  displayName: string;
+  archived: { id: string; name: string }[];
+};
+
+export default function SettingsPage() {
+  const [data, setData] = useState<Loaded | null>(null);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const [
+      { data: household, error: householdError },
+      { data: profile },
+      { data: archived },
+    ] = await Promise.all([
+      supabase.from("households").select("*").maybeSingle(),
+      supabase.from("profiles").select("display_name").maybeSingle(),
+      supabase
+        .from("recipes")
+        .select("id, name")
+        .eq("status", "archived")
+        .order("updated_at", { ascending: false }),
+    ]);
+
+    if (householdError || !household) {
+      setError("設定を読み込めませんでした。開き直してください。");
+      return;
+    }
+
+    setData({
+      household,
+      email: user?.email ?? "",
+      displayName: profile?.display_name ?? "",
+      archived: archived ?? [],
+    });
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  return (
+    <main className="mx-auto w-full max-w-[430px] px-5 pb-20">
+      <BackLink href="/">今日の献立</BackLink>
+
+      <header className="pb-[6px]">
+        <p className="font-mono text-[9.5px] tracking-[0.2em] text-ink-3">
+          SETTINGS
+        </p>
+        <h1 className="mt-[7px] font-mincho text-[24px] font-bold tracking-[0.02em]">
+          設定
+        </h1>
+      </header>
+
+      {error ? (
+        <p className="mt-4 text-[12.5px] text-meat" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      {data === null ? (
+        <p className="mt-6 text-[12.5px] text-ink-3">読み込んでいます</p>
+      ) : (
+        <>
+          <AccountSection
+            displayName={data.displayName}
+            email={data.email}
+            onRenamed={load}
+          />
+          <PlanSection household={data.household} onSaved={load} />
+          <ArchivedSection onRestored={load} recipes={data.archived} />
+          <InstallSection />
+        </>
+      )}
+    </main>
+  );
+}

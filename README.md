@@ -72,8 +72,11 @@ npm run dev                        # http://localhost:3000/kondate/
 
 ```
 app/
+  manifest.ts     ホーム画面に置くための宣言
   (auth)/login/   ログイン画面
+  (auth)/reset/   パスワードの再設定（メールのリンクから）
   (app)/          ログイン後の画面。layout.tsx が未ログインを弾く
+  (app)/settings/ 設定（世帯・献立の方針・食の条件・アカウント）
   globals.css     デザイントークン（仕様書 5.6）
 lib/
   supabase/       クライアント生成と型
@@ -81,6 +84,7 @@ lib/
   planner/        献立生成。純粋関数のみ。Supabase を import しない（Phase 3）
 docs/             仕様書・画面モック・変更記録
 supabase/         マイグレーションと運用 SQL
+public/           アイコン・Service Worker
 scripts/          DB 操作と検証のスクリプト
 .github/workflows/pages.yml   配信ワークフロー
 ```
@@ -140,11 +144,23 @@ scripts/          DB 操作と検証のスクリプト
 `public/.nojekyll` は Jekyll による `_next/` の除外を止めるために必要です。
 消さないでください。
 
+### パスワード再設定のための設定
+
+Supabase の **Authentication → URL Configuration → Redirect URLs** に
+次を追加してください。追加しないと、再設定メールのリンクを開いても
+パスワードを決め直す画面に戻ってきません。
+
+```
+https://siorine21.github.io/kondate/reset/
+```
+
 ### 配信後に確認すること
 
 - `/kondate/` を開くと `/kondate/login/` に移動する
 - ログインすると献立画面が表示される
 - ログアウト後に `/kondate/recipes/` を直接開くとログイン画面に戻る
+- 設定（トップ右上の歯車）が開き、世帯の値が保存できる
+- ホーム画面に追加すると、アドレスバーのないアプリとして開く
 
 ## リポジトリを public にしている理由
 

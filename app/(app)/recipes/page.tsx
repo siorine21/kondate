@@ -16,6 +16,8 @@ import type {
   RecipeCategory,
 } from "@/lib/supabase/types";
 
+import { BackLink } from "@/app/(app)/back-link";
+
 import { RecipeForm } from "./recipe-form";
 import { SeedButton } from "./seed-button";
 
@@ -65,7 +67,9 @@ export default function RecipesPage() {
 
   return (
     <main className="mx-auto w-full max-w-[430px] px-5 pb-20">
-      <header className="pt-6 pb-[18px]">
+      <BackLink href="/">今日の献立</BackLink>
+
+      <header className="pb-[18px]">
         <p className="font-mono text-[9.5px] tracking-[0.2em] text-ink-3">
           RECIPES{recipes ? ` · ${recipes.length}件` : ""}
         </p>
