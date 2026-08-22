@@ -1,0 +1,79 @@
+import type {
+  CookMethod,
+  DishType,
+  EntryType,
+  MainProtein,
+  RecipeCategory,
+} from "@/lib/supabase/types";
+
+/* 献立生成に必要な形だけを持つ。ここには Supabase を import しない
+   （仕様書 2.3）。純粋関数として単体テストできる状態を保つため。 */
+
+export type PlannerRecipe = {
+  id: string;
+  name: string;
+  category: RecipeCategory;
+  dishType: DishType;
+  mainProtein: MainProtein;
+  method: CookMethod;
+  cookTimeMin: number;
+  foodGroups: number[];
+  tags: string[];
+  /* アレルギー除外と、食材の使い切りの判定に使う。 */
+  ingredientNames: string[];
+};
+
+export type PlannerSettings = {
+  allergies: string[];
+  disliked: string[];
+  repeatGapDays: number;
+  weekdayMaxMinutes: number;
+  /* null は「制限なし」（仕様書 3.2）。 */
+  weekendMaxMinutes: number | null;
+};
+
+/* 前の週までに使った主菜。同じ主菜を空ける判定に使う（7.1）。 */
+export type MainHistory = {
+  recipeId: string;
+  date: string; // yyyy-mm-dd
+};
+
+export type PlanRequest = {
+  /* この日はこれ、と決め打ちする枠。locked になる（7.2-1）。 */
+  fixedDays?: { date: string; recipeId: string }[];
+  /* 自炊しない日。 */
+  noCookDays?: { date: string; entryType: EntryType }[];
+  /* リクエストのタグ。該当するレシピを押し上げる（7.2）。 */
+  tags?: string[];
+};
+
+export type PlanDay = {
+  date: string;
+  entryType: EntryType;
+  locked: boolean;
+  mainId: string | null;
+  sideId: string | null;
+  soupId: string | null;
+};
+
+export type Violation =
+  | { kind: "fish_shortage"; actual: number; target: number }
+  | { kind: "soy_shortage"; actual: number; target: number }
+  | { kind: "vegetable_missing"; dates: string[] }
+  | { kind: "fry_in_a_row"; dates: string[] }
+  | { kind: "main_repeated"; date: string; recipeId: string }
+  | { kind: "category_three_in_a_row"; dates: string[] }
+  | { kind: "allergy_included"; date: string; recipeId: string }
+  | { kind: "cook_time_over"; date: string; recipeId: string; limit: number };
+
+export type GeneratedPlan = {
+  weekStart: string;
+  days: PlanDay[];
+  /* 10回試しても満たせなかったハード制約。空なら全て満たしている（7.2-5）。 */
+  violations: Violation[];
+  attempts: number;
+};
+
+export type PlanResult =
+  | { ok: true; plan: GeneratedPlan }
+  | { ok: false; reason: "not_enough_mains"; have: number; need: number };
