@@ -64,6 +64,7 @@ npm run dev                        # http://localhost:3000/kondate/
 | `npm run build` | 静的書き出し（`out/` に生成） |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm test` | 献立生成の単体テスト（仕様書 13 章） |
 | `npm run db:migrate` | マイグレーション適用（`supabase/README.md` 参照） |
 | `npm run db:seed` | シードレシピ20件の投入（仕様書 11.1） |
 | `npm run verify:rls` | RLS の検証 |
@@ -77,11 +78,13 @@ app/
   (auth)/reset/   パスワードの再設定（メールのリンクから）
   (app)/          ログイン後の画面。layout.tsx が未ログインを弾く
   (app)/settings/ 設定（世帯・献立の方針・食の条件・アカウント）
+  (app)/week/     週間献立（生成・差し替え・手動編集・確定）
   globals.css     デザイントークン（仕様書 5.6）
 lib/
   supabase/       クライアント生成と型
   labels.ts       ENUM の日本語表示
-  planner/        献立生成。純粋関数のみ。Supabase を import しない（Phase 3）
+  planner/        献立生成。純粋関数のみ。Supabase を import しない
+    __tests__/    npm test で走る。外部ライブラリを使わず node:test で動かす
 docs/             仕様書・画面モック・変更記録
 supabase/         マイグレーションと運用 SQL
 public/           アイコン・Service Worker
@@ -97,7 +100,7 @@ scripts/          DB 操作と検証のスクリプト
 - [x] Phase 0 — 基盤構築
 - [x] Phase 1 — 認証とスキーマ
 - [x] Phase 2 — レシピ管理（完了条件は変更記録 2 章のとおり手入力に変更）
-- [ ] Phase 3 — 献立生成
+- [x] Phase 3 — 献立生成
 - [ ] Phase 4 — 買い物リスト
 - [ ] Phase 5 — 栄養サマリ
 - [ ] Phase 6 — リクエスト

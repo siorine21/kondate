@@ -84,6 +84,27 @@ test("週次目標そのものを数え直しても満たしている", () => {
   assert.equal(new Set(mainIds).size, mainIds.length, "同じ主菜が週内に出た");
 });
 
+test("同じ副菜・汁物が3日続かない", () => {
+  for (let seed = 1; seed <= 30; seed += 1) {
+    const result = generate(seed);
+    if (!result.ok) throw new Error(`seed=${seed} で生成できなかった`);
+    const { days } = result.plan;
+
+    for (let i = 2; i < days.length; i += 1) {
+      const sides = [days[i - 2].sideId, days[i - 1].sideId, days[i].sideId];
+      const soups = [days[i - 2].soupId, days[i - 1].soupId, days[i].soupId];
+      assert.ok(
+        new Set(sides).size > 1,
+        `seed=${seed} で副菜が3日続けて同じ（${sides[0]}）`,
+      );
+      assert.ok(
+        new Set(soups).size > 1,
+        `seed=${seed} で汁物が3日続けて同じ（${soups[0]}）`,
+      );
+    }
+  }
+});
+
 test("アレルギー食材を含むレシピは完全に除外される", () => {
   const settings = { ...defaultSettings, allergies: ["鮭", "ぶり"] };
   const result = generate(3, { settings });

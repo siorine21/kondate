@@ -313,7 +313,7 @@ function assignSidesAndSoups(input: {
 }) {
   const { days, sides, soups, byId } = input;
 
-  for (const day of days) {
+  for (const [index, day] of days.entries()) {
     if (day.entryType !== "cook") {
       day.sideId = null;
       day.soupId = null;
@@ -324,12 +324,17 @@ function assignSidesAndSoups(input: {
     const covered = new Set(main?.foodGroups ?? []);
     const missing = FOOD_GROUPS.filter((group) => !covered.has(group));
 
-    const side = pickFilling(sides, missing);
+    /* 直前2日と同じものは避ける。食品群だけで選ぶと、同じ副菜が
+       何日も続いて食卓が単調になる（7.2 の「単調化の防止」と同じ趣旨）。 */
+    const recentSides = recentIds(days, index, (d) => d.sideId);
+    const recentSoups = recentIds(days, index, (d) => d.soupId);
+
+    const side = pickFilling(sides, missing, recentSides);
     day.sideId = side?.id ?? null;
     for (const group of side?.foodGroups ?? []) covered.add(group);
 
     const stillMissing = FOOD_GROUPS.filter((group) => !covered.has(group));
-    day.soupId = pickFilling(soups, stillMissing)?.id ?? null;
+    day.soupId = pickFilling(soups, stillMissing, recentSoups)?.id ?? null;
   }
 
   fillSoyWithSides({ days, sides, soups, byId });
@@ -378,12 +383,37 @@ function fillSoyWithSides(input: {
   }
 }
 
+function recentIds(
+  days: readonly PlanDay[],
+  index: number,
+  pick: (day: PlanDay) => string | null,
+): string[] {
+  const ids: string[] = [];
+  for (let i = Math.max(0, index - 2); i < index; i += 1) {
+    const id = pick(days[i]);
+    if (id) ids.push(id);
+  }
+  return ids;
+}
+
 function pickFilling(
   candidates: readonly PlannerRecipe[],
   missing: readonly number[],
+  avoid: readonly string[] = [],
 ): PlannerRecipe | null {
-  let best: PlannerRecipe | null = null;
-  let bestFilled = -1;
+  const fresh = candidates.filter(
+    (candidate) => !avoid.includes(candidate.id),
+  );
+  /* 避けた結果ひとつも残らないなら、避けずに選ぶ。 */
+  return best(fresh.length > 0 ? fresh : candidates, missing);
+}
+
+function best(
+  candidates: readonly PlannerRecipe[],
+  missing: readonly number[],
+): PlannerRecipe | null {
+  let chosen: PlannerRecipe | null = null;
+  let chosenFilled = -1;
 
   for (const candidate of candidates) {
     const filled = candidate.foodGroups.filter((group) =>
@@ -391,15 +421,15 @@ function pickFilling(
     ).length;
     /* 同点なら調理時間が短いほうを採る（7.2-4）。 */
     if (
-      filled > bestFilled ||
-      (filled === bestFilled &&
-        best !== null &&
-        candidate.cookTimeMin < best.cookTimeMin)
+      filled > chosenFilled ||
+      (filled === chosenFilled &&
+        chosen !== null &&
+        candidate.cookTimeMin < chosen.cookTimeMin)
     ) {
-      best = candidate;
-      bestFilled = filled;
+      chosen = candidate;
+      chosenFilled = filled;
     }
   }
 
-  return best;
+  return chosen;
 }

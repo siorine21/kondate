@@ -25,6 +25,12 @@ export default function TodayPage() {
         </p>
         <Link
           className="mt-7 flex min-h-[48px] w-full max-w-[280px] items-center justify-center rounded-[11px] bg-ai text-[13.5px] font-medium tracking-[0.03em] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+          href="/week/"
+        >
+          今週の献立をひらく
+        </Link>
+        <Link
+          className="mt-2.5 flex min-h-[48px] w-full max-w-[280px] items-center justify-center rounded-[11px] border border-line text-[13.5px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           href="/recipes/"
         >
           レシピを見る
