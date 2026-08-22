@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { BackLink } from "@/app/(app)/back-link";
@@ -13,6 +14,11 @@ import {
   type PlannerRecipe,
   type PlannerSettings,
 } from "@/lib/planner";
+import {
+  buildShoppingList,
+  type MasterEntry,
+  type SourceRecipe,
+} from "@/lib/shopping";
 import { createClient } from "@/lib/supabase/client";
 import type { DishType, EntryType } from "@/lib/supabase/types";
 
@@ -32,6 +38,11 @@ type Loaded = {
   history: MainHistory[];
   plan: GeneratedPlan | null;
   confirmed: boolean;
+  /* 買い物リストの組み立てに使う（仕様書 9章）。 */
+  sourceRecipes: SourceRecipe[];
+  master: MasterEntry[];
+  householdServings: number;
+  includeSeasoning: boolean;
 };
 
 export default function WeekPage() {
@@ -49,12 +60,16 @@ export default function WeekPage() {
       { data: recipeRows },
       { data: ingredientRows },
       { data: ratingRows },
+      { data: masterRows },
       { data: planRow },
     ] = await Promise.all([
       supabase.from("households").select("*").maybeSingle(),
       supabase.from("recipes").select("*").eq("status", "active"),
-      supabase.from("recipe_ingredients").select("recipe_id, name"),
+      supabase
+        .from("recipe_ingredients")
+        .select("recipe_id, name, qty, unit, shop_category"),
       supabase.from("recipe_ratings").select("recipe_id, score"),
+      supabase.from("ingredient_master").select("name, aliases, is_pantry"),
       supabase
         .from("meal_plans")
         .select("id, status")
@@ -74,6 +89,19 @@ export default function WeekPage() {
     const recipes = (recipeRows ?? []).map((recipe) =>
       toPlannerRecipe(recipe, names.get(recipe.id) ?? []),
     );
+
+    const sourceRecipes: SourceRecipe[] = (recipeRows ?? []).map((recipe) => ({
+      id: recipe.id,
+      servings: recipe.servings,
+      ingredients: (ingredientRows ?? [])
+        .filter((row) => row.recipe_id === recipe.id)
+        .map((row) => ({
+          name: row.name,
+          qty: row.qty,
+          unit: row.unit,
+          shopCategory: row.shop_category,
+        })),
+    }));
 
     const scores = new Map<string, number[]>();
     for (const row of ratingRows ?? []) {
@@ -118,6 +146,14 @@ export default function WeekPage() {
       history,
       plan,
       confirmed: planRow?.status === "confirmed",
+      sourceRecipes,
+      master: (masterRows ?? []).map((row) => ({
+        name: row.name,
+        aliases: row.aliases,
+        isPantry: row.is_pantry,
+      })),
+      householdServings: household.servings,
+      includeSeasoning: household.include_seasoning_in_shopping,
     });
   }, [weekStart]);
 
@@ -191,6 +227,41 @@ export default function WeekPage() {
       .from("meal_plan_items")
       .insert(items);
     if (itemError) throw new Error("保存できませんでした");
+
+    /* 確定したときだけ買い物リストを作り直す（仕様書 9章）。
+       下書きのうちは作らない。買い物中に中身が入れ替わらないようにするため。 */
+    if (!confirmed) return;
+
+    const used = plan.days
+      .filter((day) => day.entryType === "cook")
+      .flatMap((day) => [day.mainId, day.sideId, day.soupId])
+      .filter((id): id is string => Boolean(id));
+
+    const list = buildShoppingList({
+      usedRecipeIds: used,
+      recipes: data.sourceRecipes,
+      master: data.master,
+      householdServings: data.householdServings,
+      includeSeasoning: data.includeSeasoning,
+    });
+
+    await supabase.from("shopping_items").delete().eq("plan_id", planRow.id);
+
+    if (list.length > 0) {
+      const { error: shoppingError } = await supabase
+        .from("shopping_items")
+        .insert(
+          list.map((item) => ({
+            plan_id: planRow.id,
+            name: item.name,
+            total_qty: item.totalQty,
+            unit: item.unit,
+            shop_category: item.shopCategory,
+            sort_order: item.sortOrder,
+          })),
+        );
+      if (shoppingError) throw new Error("保存できませんでした");
+    }
   }
 
   async function run(
@@ -293,9 +364,17 @@ export default function WeekPage() {
       ) : (
         <>
           {data.confirmed ? (
-            <p className="mt-3 text-[12px] text-soy" role="status">
-              この内容で確定しています
-            </p>
+            <div className="mt-3 flex items-center gap-3">
+              <p className="text-[12px] text-soy" role="status">
+                この内容で確定しています
+              </p>
+              <Link
+                className="ml-auto min-h-[38px] rounded-[9px] border border-line px-3 py-2 text-[12px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+                href="/shopping/"
+              >
+                買い物リスト
+              </Link>
+            </div>
           ) : null}
 
           <Violations violations={plan.violations} />

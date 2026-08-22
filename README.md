@@ -79,6 +79,7 @@ app/
   (app)/          ログイン後の画面。layout.tsx が未ログインを弾く
   (app)/settings/ 設定（世帯・献立の方針・食の条件・アカウント）
   (app)/week/     週間献立（生成・差し替え・手動編集・確定）
+  (app)/shopping/ 買い物リスト（売り場順・チェック・2端末の同期）
   globals.css     デザイントークン（仕様書 5.6）
 lib/
   supabase/       クライアント生成と型
@@ -101,7 +102,7 @@ scripts/          DB 操作と検証のスクリプト
 - [x] Phase 1 — 認証とスキーマ
 - [x] Phase 2 — レシピ管理（完了条件は変更記録 2 章のとおり手入力に変更）
 - [x] Phase 3 — 献立生成
-- [ ] Phase 4 — 買い物リスト
+- [x] Phase 4 — 買い物リスト
 - [ ] Phase 5 — 栄養サマリ
 - [ ] Phase 6 — リクエスト
 - [ ] Phase 7 — 仕上げ
@@ -157,6 +158,15 @@ scripts/          DB 操作と検証のスクリプト
 Supabase の SQL Editor で
 [`supabase/setup/05_add_member.sql`](supabase/setup/05_add_member.sql) を実行してください。
 `WIFE_EMAIL_HERE` を書き換える1箇所だけです。
+
+### 買い物リストの同期を有効にする
+
+チェックを2端末で同期するには、`shopping_items` を Realtime の配信対象に
+入れる必要があります。入れないと、片方でチェックしても相手の画面は変わりません。
+
+Supabase の SQL Editor で
+[`supabase/setup/08_enable_realtime.sql`](supabase/setup/08_enable_realtime.sql)
+を実行してください。書き換える箇所はありません。
 
 ### パスワード再設定のための設定
 

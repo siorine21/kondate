@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test \"lib/planner/__tests__/*.test.ts\"",
+    "test": "node --experimental-strip-types --test \"lib/**/__tests__/*.test.ts\"",
     "db:migrate": "node scripts/db-exec.mjs supabase/migrations",
     "db:setup": "node scripts/db-exec.mjs supabase/setup/01_household.sql",
     "db:verify": "node scripts/db-exec.mjs supabase/setup/02_verify_rls.sql",

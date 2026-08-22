@@ -32,16 +32,9 @@ export type ShopCategory =
   | "seasoning"
   | "other";
 
-export const SHOP_CATEGORY_ORDER: readonly ShopCategory[] = [
-  "produce",
-  "meat",
-  "seafood",
-  "tofu",
-  "dairy_egg",
-  "dry",
-  "seasoning",
-  "other",
-];
+/* 並び順の実体は lib/shop-order.ts にある。
+   ここから使っている箇所を壊さないよう、そのまま再輸出する。 */
+export { SHOP_CATEGORY_ORDER } from "@/lib/shop-order";
 
 type HouseholdRow = {
   id: string;
