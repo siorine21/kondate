@@ -254,7 +254,17 @@ export default function WeekPage() {
       includeSeasoning: data.includeSeasoning,
     });
 
-    await supabase.from("shopping_items").delete().eq("plan_id", planRow.id);
+    /* 手で足した品（is_extra）は残す。献立から作られたものだけ作り直す。
+       列がまだ無い環境では、その条件が使えないので全部作り直す。 */
+    const { error: keepError } = await supabase
+      .from("shopping_items")
+      .delete()
+      .eq("plan_id", planRow.id)
+      .eq("is_extra", false);
+
+    if (keepError) {
+      await supabase.from("shopping_items").delete().eq("plan_id", planRow.id);
+    }
 
     if (list.length > 0) {
       const { error: shoppingError } = await supabase

@@ -140,6 +140,8 @@ type ShoppingItemRow = {
   /* 会計を済ませた時刻。買い物は週に何度も分かれるため、
      「かごに入れた（checked）」と「買い終えた」を別に持つ（変更記録 3.16）。 */
   purchased_at: string | null;
+  /* 手で足した品。献立から作り直しても消さない（変更記録 3.18）。 */
+  is_extra: boolean;
   sort_order: number;
 };
 

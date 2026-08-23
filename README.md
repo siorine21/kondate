@@ -168,16 +168,21 @@ Supabase の SQL Editor で
 [`supabase/setup/08_enable_realtime.sql`](supabase/setup/08_enable_realtime.sql)
 を実行してください。書き換える箇所はありません。
 
-### 買い物リストの「会計した」を使えるようにする
+### 買い物リストの「会計した」と「品物を足す」を使えるようにする
 
-`shopping_items` に列を1つ足します。既存のデータは変わりません。
+`shopping_items` に列を2つ足します。既存のデータは変わりません。
+
+| 列 | 何のため |
+|---|---|
+| `purchased_at` | レジを通した品を一覧から畳む |
+| `is_extra` | 手で足した品（牛乳・洗剤など）を、献立を組み直しても残す |
 
 Supabase の SQL Editor で
-[`supabase/setup/10_purchased_at.sql`](supabase/setup/10_purchased_at.sql)
-を実行してください。書き換える箇所はありません。
+[`supabase/setup/10_shopping_columns.sql`](supabase/setup/10_shopping_columns.sql)
+を実行してください。書き換える箇所はありません。何度実行しても同じです。
 
-実行するまでは一覧とチェックは使えますが、「会計した」を押すと
-その旨の案内が出ます。
+実行するまでは一覧とチェックは使えますが、「会計した」や「品物を足す」を
+押すとその旨の案内が出ます。
 
 ### パスワード再設定のための設定
 
