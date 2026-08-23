@@ -20,12 +20,15 @@ import {
   type ShopCategory,
 } from "@/lib/supabase/types";
 
-/* レシピの手動登録（仕様書 6章 の「手動作成」に対応する画面）。
+/* レシピの手動登録と編集（仕様書 6章「手動作成」「編集」/ 5.2-4）。
 
    AI 生成を使わない構成では、これがレシピを増やす唯一の手段になる。
-   スマートフォンでの入力を想定し、選択式を主にして打鍵を減らす。 */
+   スマートフォンでの入力を想定し、選択式を主にして打鍵を減らす。
 
-type IngredientDraft = {
+   initial を渡すと編集になる。渡さなければ新規登録。
+   入力欄は同じなので、画面を2つに分けずに1つで扱う。 */
+
+export type IngredientDraft = {
   name: string;
   qty: string;
   unit: string;
@@ -39,6 +42,20 @@ const emptyIngredient = (): IngredientDraft => ({
   shop_category: "produce",
 });
 
+export type RecipeDraft = {
+  id: string;
+  name: string;
+  category: RecipeCategory;
+  dish_type: DishType;
+  main_protein: MainProtein;
+  method: CookMethod;
+  cook_time_min: number;
+  food_groups: number[];
+  steps: string[];
+  memo: string | null;
+  ingredients: IngredientDraft[];
+};
+
 const labelClass =
   "mb-1.5 block font-mono text-[9.5px] tracking-[0.14em] text-ink-3";
 const fieldClass =
@@ -47,24 +64,44 @@ const fieldClass =
 
 export function RecipeForm({
   householdId,
+  initial,
   onSaved,
+  onCancel,
 }: {
   householdId: string;
+  /* 渡すと編集になる。 */
+  initial?: RecipeDraft;
   onSaved: () => void;
+  onCancel?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [dishType, setDishType] = useState<DishType>("main");
-  const [category, setCategory] = useState<RecipeCategory>("washoku");
-  const [protein, setProtein] = useState<MainProtein>("meat");
-  const [method, setMethod] = useState<CookMethod>("grill");
-  const [cookTime, setCookTime] = useState("20");
-  const [foodGroups, setFoodGroups] = useState<number[]>([1]);
-  const [ingredients, setIngredients] = useState<IngredientDraft[]>([
-    emptyIngredient(),
-  ]);
-  const [steps, setSteps] = useState<string[]>([""]);
-  const [memo, setMemo] = useState("");
+  const editing = initial !== undefined;
+  const [open, setOpen] = useState(editing);
+  const [name, setName] = useState(initial?.name ?? "");
+  const [dishType, setDishType] = useState<DishType>(
+    initial?.dish_type ?? "main",
+  );
+  const [category, setCategory] = useState<RecipeCategory>(
+    initial?.category ?? "washoku",
+  );
+  const [protein, setProtein] = useState<MainProtein>(
+    initial?.main_protein ?? "meat",
+  );
+  const [method, setMethod] = useState<CookMethod>(initial?.method ?? "grill");
+  const [cookTime, setCookTime] = useState(
+    String(initial?.cook_time_min ?? 20),
+  );
+  const [foodGroups, setFoodGroups] = useState<number[]>(
+    initial?.food_groups ?? [1],
+  );
+  const [ingredients, setIngredients] = useState<IngredientDraft[]>(
+    initial && initial.ingredients.length > 0
+      ? initial.ingredients
+      : [emptyIngredient()],
+  );
+  const [steps, setSteps] = useState<string[]>(
+    initial && initial.steps.length > 0 ? initial.steps : [""],
+  );
+  const [memo, setMemo] = useState(initial?.memo ?? "");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -107,21 +144,49 @@ export function RecipeForm({
     setMessage("");
     const supabase = createClient();
 
+    const fields = {
+      name: trimmedName,
+      category,
+      dish_type: dishType,
+      main_protein: protein,
+      method,
+      cook_time_min: minutes,
+      food_groups: foodGroups,
+      steps: steps.map((s) => s.trim()).filter((s) => s.length > 0),
+      memo: memo.trim() || null,
+    };
+
+    const ingredientRows = (recipeId: string) =>
+      ingredients
+        .map((ing, index) => ({ ing, index }))
+        .filter(({ ing }) => ing.name.trim().length > 0)
+        .map(({ ing, index }) => ({
+          recipe_id: recipeId,
+          name: ing.name.trim(),
+          qty: ing.qty.trim() === "" ? null : Number(ing.qty),
+          unit: ing.unit.trim() || null,
+          shop_category: ing.shop_category,
+          sort_order: index,
+        }));
+
+    if (initial) {
+      const failed = await update(supabase, initial.id, fields, ingredientRows);
+      setPending(false);
+      if (failed) {
+        setMessage(failed);
+        return;
+      }
+      onSaved();
+      return;
+    }
+
     const { data: inserted, error } = await supabase
       .from("recipes")
       .insert({
+        ...fields,
         household_id: householdId,
-        name: trimmedName,
-        category,
-        dish_type: dishType,
-        main_protein: protein,
-        method,
-        cook_time_min: minutes,
         servings: 2,
-        food_groups: foodGroups,
         tags: [],
-        steps: steps.map((s) => s.trim()).filter((s) => s.length > 0),
-        memo: memo.trim() || null,
         source: "manual",
         /* 人が書いたものなので承認は要らない。draft の縛りは
            AI 生成にのみ課される（仕様書 2.2-6）。 */
@@ -136,17 +201,7 @@ export function RecipeForm({
       return;
     }
 
-    const rows = ingredients
-      .map((ing, index) => ({ ing, index }))
-      .filter(({ ing }) => ing.name.trim().length > 0)
-      .map(({ ing, index }) => ({
-        recipe_id: inserted.id,
-        name: ing.name.trim(),
-        qty: ing.qty.trim() === "" ? null : Number(ing.qty),
-        unit: ing.unit.trim() || null,
-        shop_category: ing.shop_category,
-        sort_order: index,
-      }));
+    const rows = ingredientRows(inserted.id);
 
     if (rows.length > 0) {
       const { error: ingredientError } = await supabase
@@ -182,7 +237,9 @@ export function RecipeForm({
 
   return (
     <section className="rounded-card border border-line bg-card p-4">
-      <h2 className="font-mincho text-[17px] font-bold">レシピを登録する</h2>
+      <h2 className="font-mincho text-[17px] font-bold">
+        {editing ? "レシピを編集する" : "レシピを登録する"}
+      </h2>
 
       <div className="mt-4">
         <label className={labelClass} htmlFor="rf-name">
@@ -365,19 +422,29 @@ export function RecipeForm({
 
       <div className="mt-4 flex gap-2.5">
         <button
-          className="flex-1 rounded-[9px] border border-line py-2.5 text-[12.5px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-          onClick={() => setOpen(false)}
+          className="min-h-[44px] flex-1 rounded-[9px] border border-line text-[12.5px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+          onClick={() => {
+            if (editing) {
+              onCancel?.();
+              return;
+            }
+            setOpen(false);
+          }}
           type="button"
         >
           やめる
         </button>
         <button
-          className="flex-1 rounded-[9px] bg-ai py-2.5 text-[12.5px] font-medium text-white disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+          className="min-h-[44px] flex-1 rounded-[9px] bg-ai text-[12.5px] font-medium text-white disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           disabled={pending}
           onClick={save}
           type="button"
         >
-          {pending ? "保存しています" : "この内容で登録"}
+          {pending
+          ? "保存しています"
+          : editing
+            ? "この内容で保存"
+            : "この内容で登録"}
         </button>
       </div>
     </section>
@@ -416,4 +483,72 @@ function Select({
       </select>
     </div>
   );
+}
+
+/* 編集の保存。材料は入れ替えなので、消してから入れ直す。
+   途中で落ちると材料だけ消えた状態が残るため、元の行を控えてから消す。 */
+async function update(
+  supabase: ReturnType<typeof createClient>,
+  recipeId: string,
+  fields: {
+    name: string;
+    category: RecipeCategory;
+    dish_type: DishType;
+    main_protein: MainProtein;
+    method: CookMethod;
+    cook_time_min: number;
+    food_groups: number[];
+    steps: string[];
+    memo: string | null;
+  },
+  buildRows: (recipeId: string) => {
+    recipe_id: string;
+    name: string;
+    qty: number | null;
+    unit: string | null;
+    shop_category: ShopCategory;
+    sort_order: number;
+  }[],
+): Promise<string | null> {
+  const { error } = await supabase
+    .from("recipes")
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq("id", recipeId);
+
+  if (error) {
+    return "保存できませんでした。時間を置いてもう一度試してください。";
+  }
+
+  const { data: previous } = await supabase
+    .from("recipe_ingredients")
+    .select("name, qty, unit, shop_category, sort_order")
+    .eq("recipe_id", recipeId);
+
+  const { error: deleteError } = await supabase
+    .from("recipe_ingredients")
+    .delete()
+    .eq("recipe_id", recipeId);
+
+  if (deleteError) {
+    return "材料を保存できませんでした。時間を置いてもう一度試してください。";
+  }
+
+  const rows = buildRows(recipeId);
+  if (rows.length === 0) return null;
+
+  const { error: insertError } = await supabase
+    .from("recipe_ingredients")
+    .insert(rows);
+
+  if (insertError) {
+    /* 入れ直せなかったので、消す前の材料を戻す。 */
+    if (previous && previous.length > 0) {
+      await supabase
+        .from("recipe_ingredients")
+        .insert(previous.map((row) => ({ ...row, recipe_id: recipeId })));
+    }
+    return "材料を保存できませんでした。ほかの内容は保存済みです。材料を確かめて、もう一度保存してください。";
+  }
+
+  return null;
 }

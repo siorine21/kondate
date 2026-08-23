@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
 import { BackLink } from "@/app/(app)/back-link";
 import {
@@ -16,6 +16,11 @@ import {
 } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/client";
 import type { Recipe, RecipeIngredient } from "@/lib/supabase/types";
+
+import {
+  RecipeForm,
+  type RecipeDraft,
+} from "@/app/(app)/recipes/recipe-form";
 
 import { ArchiveButton, RatingStars } from "./detail-actions";
 
@@ -43,11 +48,12 @@ function RecipeDetail() {
   const id = useSearchParams().get("id");
   const [data, setData] = useState<Loaded | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [editing, setEditing] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!id) {
       setNotFound(true);
-      return;
+      return () => {};
     }
     let active = true;
 
@@ -100,6 +106,8 @@ function RecipeDetail() {
       active = false;
     };
   }, [id]);
+
+  useEffect(() => load(), [load]);
 
   if (notFound) {
     return (
@@ -222,10 +230,56 @@ function RecipeDetail() {
       </div>
 
       <div className="mt-3.5 flex gap-[9px]">
+        <button
+          className="min-h-[44px] flex-1 rounded-[9px] border border-line text-[12.5px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+          onClick={() => setEditing(true)}
+          type="button"
+        >
+          レシピを編集
+        </button>
         <ArchiveButton recipeId={recipe.id} />
       </div>
+
+      {editing ? (
+        <div className="mt-4">
+          <RecipeForm
+            householdId={recipe.household_id}
+            initial={toDraft(recipe, ingredients)}
+            onCancel={() => setEditing(false)}
+            onSaved={() => {
+              setEditing(false);
+              load();
+            }}
+          />
+        </div>
+      ) : null}
     </main>
   );
+}
+
+/* 画面の値を入力欄の形に直す。数値は文字列で持つ（空欄を表せるため）。 */
+function toDraft(
+  recipe: Recipe,
+  ingredients: readonly RecipeIngredient[],
+): RecipeDraft {
+  return {
+    id: recipe.id,
+    name: recipe.name,
+    category: recipe.category,
+    dish_type: recipe.dish_type,
+    main_protein: recipe.main_protein,
+    method: recipe.method,
+    cook_time_min: recipe.cook_time_min,
+    food_groups: recipe.food_groups,
+    steps: recipe.steps,
+    memo: recipe.memo,
+    ingredients: ingredients.map((ing) => ({
+      name: ing.name,
+      qty: ing.qty === null ? "" : String(ing.qty),
+      unit: ing.unit ?? "",
+      shop_category: ing.shop_category,
+    })),
+  };
 }
 
 function Tag({
