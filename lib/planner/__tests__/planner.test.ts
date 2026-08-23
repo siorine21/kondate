@@ -6,7 +6,7 @@ import { generateWeek, weekDates } from "../generate.ts";
 import { rerollDay } from "../reroll.ts";
 import type { PlanDay, PlannerRecipe } from "../types.ts";
 
-import { MONDAY, defaultSettings, seedRecipes } from "./fixtures.ts";
+import { SUNDAY, defaultSettings, seedRecipes } from "./fixtures.ts";
 
 /* 仕様書 13 章の方針にそって、生成アルゴリズムだけを見る。
    画面のテストは書かない。 */
@@ -17,7 +17,7 @@ const byId = (id: string | null) =>
 
 function generate(seed: number, overrides: Partial<Parameters<typeof generateWeek>[0]> = {}) {
   return generateWeek({
-    weekStart: MONDAY,
+    weekStart: SUNDAY,
     recipes,
     settings: defaultSettings,
     seed,
@@ -25,11 +25,11 @@ function generate(seed: number, overrides: Partial<Parameters<typeof generateWee
   });
 }
 
-test("週の起点は月曜で、7日ぶん返る", () => {
-  const dates = weekDates(MONDAY);
+test("週の起点は日曜で、7日ぶん返る", () => {
+  const dates = weekDates(SUNDAY);
   assert.equal(dates.length, 7);
-  assert.equal(new Date(`${MONDAY}T00:00:00Z`).getUTCDay(), 1);
-  assert.equal(dates[6], "2026-08-30");
+  assert.equal(new Date(`${SUNDAY}T00:00:00Z`).getUTCDay(), 0);
+  assert.equal(dates[6], "2026-08-29");
 });
 
 test("シード20件から7日分が生成され、ハード制約を全て満たす", () => {
@@ -73,8 +73,8 @@ test("週次目標そのものを数え直しても満たしている", () => {
     assert.ok(groups.includes(3), `${day.date} に緑黄色野菜がない`);
   }
 
-  /* 平日は30分以内（既定値）。 */
-  for (const day of days.slice(0, 5)) {
+  /* 平日は30分以内（既定値）。日曜始まりなので月〜金は 1〜5 番目。 */
+  for (const day of days.slice(1, 6)) {
     const main = byId(day.mainId);
     assert.ok(main && main.cookTimeMin <= 30, `${day.date} が平日の上限を超えた`);
   }
@@ -158,7 +158,7 @@ test("主菜が足りないときは、不足件数を添えて断る", () => {
     (recipe) => recipe.dishType !== "main" || recipe.name === "麻婆豆腐",
   );
   const result = generateWeek({
-    weekStart: MONDAY,
+    weekStart: SUNDAY,
     recipes: few,
     settings: defaultSettings,
     seed: 1,
@@ -192,6 +192,49 @@ test("直近に使った主菜は間隔が空くまで出ない", () => {
   assert.ok(!used.includes("鶏の照り焼き"));
   assert.ok(!used.includes("麻婆豆腐"));
   assert.deepEqual(result.plan.violations, []);
+});
+
+test("手で選んだ副菜は、組み直しても残る", () => {
+  const date = "2026-08-26";
+  const result = generate(13, {
+    request: {
+      fixedSides: [{ date, recipeId: "もやしのナムル" }],
+    },
+  });
+  if (!result.ok) throw new Error("生成できなかった");
+
+  const day = result.plan.days.find((d) => d.date === date);
+  assert.equal(day?.sideId, "もやしのナムル");
+});
+
+test("副菜をつけない日を作れる", () => {
+  const date = "2026-08-26";
+  const result = generate(14, {
+    request: { fixedSides: [{ date, recipeId: null }] },
+  });
+  if (!result.ok) throw new Error("生成できなかった");
+
+  const day = result.plan.days.find((d) => d.date === date);
+  assert.equal(day?.sideId, null);
+  /* 汁物は自動のまま残る。 */
+  assert.ok(day?.soupId);
+});
+
+test("日曜と土曜が休日、月〜金が平日として扱われる", () => {
+  const result = generate(15);
+  if (!result.ok) throw new Error("生成できなかった");
+  const { days } = result.plan;
+
+  assert.equal(new Date(`${days[0].date}T00:00:00Z`).getUTCDay(), 0, "1日目が日曜でない");
+  assert.equal(new Date(`${days[6].date}T00:00:00Z`).getUTCDay(), 6, "7日目が土曜でない");
+
+  for (const day of days.slice(1, 6)) {
+    const main = recipes.find((r) => r.id === day.mainId);
+    assert.ok(
+      main && main.cookTimeMin <= 30,
+      `${day.date} は平日なのに ${main?.cookTimeMin}分`,
+    );
+  }
 });
 
 test("1日差し替えは、その日だけ変えて他の日を残す", () => {
@@ -233,7 +276,7 @@ test("制約の検査そのものが働いている（わざと壊して確か�
     mainId: "鶏の照り焼き",
   }));
   const violations = validateWeek({
-    weekStart: MONDAY,
+    weekStart: SUNDAY,
     days: broken,
     byId,
     settings: defaultSettings,

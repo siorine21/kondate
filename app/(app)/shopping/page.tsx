@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { BackLink } from "@/app/(app)/back-link";
 import { SHOP_CATEGORY_LABEL, formatQuantity } from "@/lib/labels";
-import { mondayOf } from "@/lib/plan-mapping";
+import { weekStartOf } from "@/lib/plan-mapping";
 import { SHOP_CATEGORY_ORDER } from "@/lib/shop-order";
 import { createClient } from "@/lib/supabase/client";
 import type { ShopCategory } from "@/lib/supabase/types";
@@ -26,7 +26,7 @@ type Item = {
 };
 
 export default function ShoppingPage() {
-  const [weekStart] = useState(() => mondayOf(new Date()));
+  const [weekStart] = useState(() => weekStartOf(new Date()));
   const [items, setItems] = useState<Item[] | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
   const [planId, setPlanId] = useState<string | null>(null);

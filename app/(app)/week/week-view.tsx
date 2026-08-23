@@ -38,6 +38,8 @@ export function WeekView({
   onToggleLock,
   onSetEntryType,
   onSetMain,
+  onSetSide,
+  onSetSoup,
 }: {
   plan: GeneratedPlan;
   recipes: readonly PlannerRecipe[];
@@ -46,6 +48,8 @@ export function WeekView({
   onToggleLock: (date: string) => void;
   onSetEntryType: (date: string, entryType: EntryType) => void;
   onSetMain: (date: string, recipeId: string) => void;
+  onSetSide: (date: string, recipeId: string | null) => void;
+  onSetSoup: (date: string, recipeId: string | null) => void;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const byId = (id: string | null) =>
@@ -54,7 +58,11 @@ export function WeekView({
   return (
     <>
       {/* 7分割のたんぱく源リボン */}
-      <div className="mt-4 flex h-[10px] w-full overflow-hidden rounded-[5px]">
+      <div
+        aria-label="たんぱく源の並び"
+        className="mt-4 flex h-[10px] w-full overflow-hidden rounded-[5px]"
+        role="img"
+      >
         {plan.days.map((day) => {
           const main = byId(day.mainId);
           const protein = day.entryType === "cook" ? main?.mainProtein : "none";
@@ -77,6 +85,8 @@ export function WeekView({
             key={day.date}
             onSetEntryType={onSetEntryType}
             onSetMain={onSetMain}
+            onSetSide={onSetSide}
+            onSetSoup={onSetSoup}
             onToggleEdit={() =>
               setEditing((current) => (current === day.date ? null : day.date))
             }
@@ -102,6 +112,8 @@ function DayCard({
   onToggleLock,
   onSetEntryType,
   onSetMain,
+  onSetSide,
+  onSetSoup,
 }: {
   day: PlanDay;
   byId: (id: string | null) => PlannerRecipe | null;
@@ -113,6 +125,8 @@ function DayCard({
   onToggleLock: (date: string) => void;
   onSetEntryType: (date: string, entryType: EntryType) => void;
   onSetMain: (date: string, recipeId: string) => void;
+  onSetSide: (date: string, recipeId: string | null) => void;
+  onSetSoup: (date: string, recipeId: string | null) => void;
 }) {
   const { day: label, weekday } = formatDay(day.date);
   const main = byId(day.mainId);
@@ -130,12 +144,7 @@ function DayCard({
             {label}
           </span>
           <span className="font-mincho text-[13px] text-ink-2">{weekday}</span>
-          {day.locked ? (
-            <span aria-label="固定" className="text-[11px]" role="img">
-              🔒
-            </span>
-          ) : null}
-          <span className="ml-auto flex gap-1.5">
+          <span className="ml-auto flex items-center gap-1.5">
             {main && day.entryType === "cook" ? (
               <>
                 <Tag>{CATEGORY_LABEL[main.category]}</Tag>
@@ -144,6 +153,10 @@ function DayCard({
             ) : (
               <Tag>{ENTRY_LABEL[day.entryType]}</Tag>
             )}
+            <LockButton
+              locked={day.locked}
+              onClick={() => onToggleLock(day.date)}
+            />
           </span>
         </div>
 
@@ -178,9 +191,6 @@ function DayCard({
           >
             {pending ? "選び直しています" : "差し替え"}
           </SmallButton>
-          <SmallButton onClick={() => onToggleLock(day.date)}>
-            {day.locked ? "固定を外す" : "固定する"}
-          </SmallButton>
           <SmallButton onClick={onToggleEdit}>
             {editing ? "閉じる" : "変える"}
           </SmallButton>
@@ -194,6 +204,8 @@ function DayCard({
               onSetMain(day.date, id);
               onToggleEdit();
             }}
+            onSetSide={(id) => onSetSide(day.date, id)}
+            onSetSoup={(id) => onSetSoup(day.date, id)}
             recipes={recipes}
           />
         ) : null}
@@ -207,13 +219,19 @@ function DayEditor({
   recipes,
   onSetEntryType,
   onSetMain,
+  onSetSide,
+  onSetSoup,
 }: {
   day: PlanDay;
   recipes: readonly PlannerRecipe[];
   onSetEntryType: (date: string, entryType: EntryType) => void;
   onSetMain: (id: string) => void;
+  onSetSide: (id: string | null) => void;
+  onSetSoup: (id: string | null) => void;
 }) {
   const mains = recipes.filter((recipe) => recipe.dishType === "main");
+  const sides = recipes.filter((recipe) => recipe.dishType === "side");
+  const soups = recipes.filter((recipe) => recipe.dishType === "soup");
 
   return (
     <div className="mt-3 border-t border-line pt-3">
@@ -240,32 +258,110 @@ function DayEditor({
 
       {day.entryType === "cook" ? (
         <>
-          <p className="mt-3 font-mono text-[9.5px] tracking-[0.14em] text-ink-3">
-            主菜を選び直す
-          </p>
-          <div className="mt-1.5 max-h-[220px] overflow-y-auto rounded-[9px] border border-line">
-            {mains.map((recipe) => (
-              <button
-                className={`flex w-full items-center gap-2 border-b border-[#EFF1EC] px-3 py-2.5 text-left text-[13px] last:border-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
-                  recipe.id === day.mainId ? "bg-ai-soft" : ""
-                }`}
-                key={recipe.id}
-                onClick={() => onSetMain(recipe.id)}
-                type="button"
-              >
-                <span
-                  className={`h-[7px] w-[7px] flex-shrink-0 rounded-full ${PROTEIN_BAR[recipe.mainProtein]}`}
-                />
-                <span className="min-w-0 flex-1 truncate">{recipe.name}</span>
-                <span className="font-mono text-[10.5px] text-ink-3">
-                  {recipe.cookTimeMin}分
-                </span>
-              </button>
-            ))}
-          </div>
+          <Picker
+            candidates={mains}
+            label="主菜を選び直す"
+            onPick={(id) => id && onSetMain(id)}
+            selectedId={day.mainId}
+          />
+          <Picker
+            allowNone
+            candidates={sides}
+            label="副菜（つけなくてもよい）"
+            onPick={onSetSide}
+            selectedId={day.sideId}
+          />
+          <Picker
+            allowNone
+            candidates={soups}
+            label="汁物（つけなくてもよい）"
+            onPick={onSetSoup}
+            selectedId={day.soupId}
+          />
         </>
       ) : null}
     </div>
+  );
+}
+
+/* 品を選ぶ一覧。allowNone を付けると「つけない」を選べる。 */
+function Picker({
+  label,
+  candidates,
+  selectedId,
+  allowNone,
+  onPick,
+}: {
+  label: string;
+  candidates: readonly PlannerRecipe[];
+  selectedId: string | null;
+  allowNone?: boolean;
+  onPick: (id: string | null) => void;
+}) {
+  if (candidates.length === 0) return null;
+
+  return (
+    <>
+      <p className="mt-3 font-mono text-[9.5px] tracking-[0.14em] text-ink-3">
+        {label}
+      </p>
+      <div className="mt-1.5 max-h-[220px] overflow-y-auto rounded-[9px] border border-line">
+        {allowNone ? (
+          <button
+            className={`flex min-h-[42px] w-full items-center border-b border-[#EFF1EC] px-3 text-left text-[13px] text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
+              selectedId === null ? "bg-ai-soft" : ""
+            }`}
+            onClick={() => onPick(null)}
+            type="button"
+          >
+            つけない
+          </button>
+        ) : null}
+        {candidates.map((recipe) => (
+          <button
+            className={`flex min-h-[42px] w-full items-center gap-2 border-b border-[#EFF1EC] px-3 text-left text-[13px] last:border-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
+              recipe.id === selectedId ? "bg-ai-soft" : ""
+            }`}
+            key={recipe.id}
+            onClick={() => onPick(recipe.id)}
+            type="button"
+          >
+            <span
+              className={`h-[7px] w-[7px] flex-shrink-0 rounded-full ${PROTEIN_BAR[recipe.mainProtein]}`}
+            />
+            <span className="min-w-0 flex-1 truncate">{recipe.name}</span>
+            <span className="font-mono text-[10.5px] text-ink-3">
+              {recipe.cookTimeMin}分
+            </span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/* 固定の鍵。カードの右上に置く（押した状態が見えるようにする）。 */
+function LockButton({
+  locked,
+  onClick,
+}: {
+  locked: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      aria-label={locked ? "固定を外す" : "この日を固定する"}
+      aria-pressed={locked}
+      className={`flex h-[44px] w-[44px] items-center justify-center rounded-[10px] border text-[16px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
+        locked ? "border-ai bg-ai-soft" : "border-line bg-card"
+      }`}
+      onClick={onClick}
+      type="button"
+    >
+      <span aria-hidden className={locked ? "" : "opacity-35"}>
+        {locked ? "🔒" : "🔓"}
+      </span>
+    </button>
   );
 }
 

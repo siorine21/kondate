@@ -40,6 +40,15 @@ export function rerollDay(input: {
     .filter((day) => day.entryType !== "cook")
     .map((day) => ({ date: day.date, entryType: day.entryType }));
 
+  /* 対象日以外の副菜・汁物もそのまま残す。
+     主菜を1日変えただけで、他の日の副菜が入れ替わると分かりにくい。 */
+  const fixedSides = plan.days
+    .filter((day) => day !== target && day.entryType === "cook")
+    .map((day) => ({ date: day.date, recipeId: day.sideId }));
+  const fixedSoups = plan.days
+    .filter((day) => day !== target && day.entryType === "cook")
+    .map((day) => ({ date: day.date, recipeId: day.soupId }));
+
   /* いま入っているものは選び直さない（7.3）。 */
   const withoutCurrent = recipes.filter(
     (recipe) => recipe.id !== target.mainId,
@@ -51,7 +60,7 @@ export function rerollDay(input: {
     settings,
     history,
     ratings,
-    request: { ...request, fixedDays, noCookDays },
+    request: { ...request, fixedDays, noCookDays, fixedSides, fixedSoups },
     seed,
   });
 

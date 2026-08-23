@@ -4,7 +4,13 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { BackLink } from "@/app/(app)/back-link";
-import { addDays, mondayOf, toPlannerRecipe, toPlannerSettings } from "@/lib/plan-mapping";
+import {
+  addDays,
+  formatDay,
+  toPlannerRecipe,
+  toPlannerSettings,
+  weekStartOf,
+} from "@/lib/plan-mapping";
 import {
   generateWeek,
   rerollDay,
@@ -46,7 +52,8 @@ type Loaded = {
 };
 
 export default function WeekPage() {
-  const [weekStart] = useState(() => mondayOf(new Date()));
+  const [thisWeek] = useState(() => weekStartOf(new Date()));
+  const [weekStart, setWeekStart] = useState(thisWeek);
   const [data, setData] = useState<Loaded | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
@@ -292,20 +299,39 @@ export default function WeekPage() {
     setPendingDate(null);
   }
 
-  /* 手で決めた枠を保ったまま組み直すための土台。 */
-  function fixedFrom(days: readonly PlanDay[], onlyLocked: boolean) {
+  /* 手で決めた枠を保ったまま組み直すための土台。
+
+     recomputeDate を渡すと、その日だけ主菜・副菜・汁物を選び直す。
+     onlyLocked を渡すと、固定した日以外は全部組み直す（週の再生成）。 */
+  function requestFrom(
+    days: readonly PlanDay[],
+    options: { onlyLocked?: boolean; recomputeDate?: string } = {},
+  ) {
+    const { onlyLocked = false, recomputeDate } = options;
+    const cookDays = days.filter((day) => day.entryType === "cook");
+    const keep = (day: PlanDay) => day.date !== recomputeDate;
+
     return {
-      fixedDays: days
+      fixedDays: cookDays
         .filter(
-          (day) =>
-            day.entryType === "cook" &&
-            day.mainId &&
-            (onlyLocked ? day.locked : true),
+          (day) => day.mainId && keep(day) && (onlyLocked ? day.locked : true),
         )
         .map((day) => ({ date: day.date, recipeId: day.mainId ?? "" })),
       noCookDays: days
         .filter((day) => day.entryType !== "cook")
         .map((day) => ({ date: day.date, entryType: day.entryType })),
+      /* 週ごと組み直すとき以外は、副菜と汁物もそのまま残す。
+         1日いじっただけで他の日の副菜が入れ替わると分かりにくい。 */
+      fixedSides: onlyLocked
+        ? []
+        : cookDays
+            .filter(keep)
+            .map((day) => ({ date: day.date, recipeId: day.sideId })),
+      fixedSoups: onlyLocked
+        ? []
+        : cookDays
+            .filter(keep)
+            .map((day) => ({ date: day.date, recipeId: day.soupId })),
     };
   }
 
@@ -324,18 +350,67 @@ export default function WeekPage() {
 
   const plan = data?.plan ?? null;
 
+  function moveTo(next: string) {
+    if (next === weekStart) return;
+    setData(null); // 前の週の内容を出したままにしない
+    setError("");
+    setWeekStart(next);
+  }
+
+  function moveWeek(days: number) {
+    moveTo(addDays(weekStart, days));
+  }
+
   return (
     <main className="mx-auto w-full max-w-[430px] px-5 pb-24">
       <BackLink href="/">今日の献立</BackLink>
 
       <header className="pb-2">
         <p className="font-mono text-[9.5px] tracking-[0.2em] text-ink-3">
-          WEEK · {weekStart.replaceAll("-", ".")}
+          WEEK
         </p>
         <h1 className="mt-[7px] font-mincho text-[24px] font-bold tracking-[0.02em]">
           週間献立
         </h1>
       </header>
+
+      {/* 週の切り替え。日曜始まりの7日間（変更記録 3.10）。 */}
+      <div className="mt-2 flex items-center gap-2">
+        <WeekButton
+          disabled={busy !== ""}
+          label="前の週"
+          onClick={() => moveWeek(-7)}
+        >
+          ‹
+        </WeekButton>
+
+        <div className="flex-1 text-center">
+          <p className="font-mono text-[11.5px] tracking-[0.06em] text-ink">
+            {formatDay(weekStart).day} – {formatDay(addDays(weekStart, 6)).day}
+          </p>
+          {weekStart !== thisWeek ? (
+            <button
+              className="min-h-[28px] font-mono text-[9.5px] tracking-[0.12em] text-ai focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+              onClick={() => moveTo(thisWeek)}
+              type="button"
+            >
+              今週にもどる
+            </button>
+          ) : (
+            <p className="font-mono text-[9.5px] tracking-[0.12em] text-ink-3">
+              今週
+            </p>
+          )}
+        </div>
+
+        <WeekButton
+          disabled={busy !== ""}
+          label="次の週"
+          onClick={() => moveWeek(7)}
+        >
+          ›
+        </WeekButton>
+      </div>
 
       {error ? (
         <p className="mt-3 text-[12.5px] leading-[1.8] text-meat" role="alert">
@@ -398,7 +473,7 @@ export default function WeekPage() {
               const days = plan.days.map((day) =>
                 day.date === date ? { ...day, entryType } : day,
               );
-              void run("変更", () => build(fixedFrom(days, false)));
+              void run("変更", () => build(requestFrom(days)));
             }}
             onSetMain={(date, recipeId) => {
               const days = plan.days.map((day) =>
@@ -406,14 +481,26 @@ export default function WeekPage() {
                   ? { ...day, mainId: recipeId, entryType: "cook" as const }
                   : day,
               );
-              void run("変更", () => build(fixedFrom(days, false)));
+              void run("変更", () => build(requestFrom(days)));
+            }}
+            onSetSide={(date, recipeId) => {
+              const days = plan.days.map((day) =>
+                day.date === date ? { ...day, sideId: recipeId } : day,
+              );
+              void run("変更", () => build(requestFrom(days)));
+            }}
+            onSetSoup={(date, recipeId) => {
+              const days = plan.days.map((day) =>
+                day.date === date ? { ...day, soupId: recipeId } : day,
+              );
+              void run("変更", () => build(requestFrom(days)));
             }}
             onToggleLock={(date) => {
               const days = plan.days.map((day) =>
                 day.date === date ? { ...day, locked: !day.locked } : day,
               );
               void run("変更", () => {
-                const result = build(fixedFrom(days, false));
+                const result = build(requestFrom(days));
                 if (result.ok) {
                   for (const day of result.plan.days) {
                     day.locked =
@@ -433,7 +520,7 @@ export default function WeekPage() {
               className="min-h-[48px] flex-1 rounded-[11px] border border-line text-[13.5px] text-ink disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               disabled={busy !== ""}
               onClick={() =>
-                void run("再生成", () => build(fixedFrom(plan.days, true)))
+                void run("再生成", () => build(requestFrom(plan.days, { onlyLocked: true })))
               }
               type="button"
             >
@@ -443,7 +530,7 @@ export default function WeekPage() {
               className="min-h-[48px] flex-1 rounded-[11px] bg-ai text-[13.5px] font-medium text-white disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               disabled={busy !== "" || data.confirmed}
               onClick={() =>
-                void run("確定", () => build(fixedFrom(plan.days, false)), true)
+                void run("確定", () => build(requestFrom(plan.days)), true)
               }
               type="button"
             >
@@ -453,6 +540,30 @@ export default function WeekPage() {
         </>
       )}
     </main>
+  );
+}
+
+function WeekButton({
+  children,
+  label,
+  disabled,
+  onClick,
+}: {
+  children: React.ReactNode;
+  label: string;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      aria-label={label}
+      className="flex h-[44px] w-[44px] items-center justify-center rounded-[10px] border border-line text-[18px] text-ink-2 disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+      disabled={disabled}
+      onClick={onClick}
+      type="button"
+    >
+      {children}
+    </button>
   );
 }
 

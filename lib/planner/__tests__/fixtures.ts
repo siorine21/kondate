@@ -80,4 +80,4 @@ export const defaultSettings: PlannerSettings = {
   weekendMaxMinutes: null,
 };
 
-export const MONDAY = "2026-08-24"; // 月曜
+export const SUNDAY = "2026-08-23"; // 日曜（週の起点。変更記録 3.10）

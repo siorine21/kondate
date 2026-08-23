@@ -32,11 +32,10 @@ export function toPlannerSettings(household: Household): PlannerSettings {
   };
 }
 
-/* 月曜始まりの週（仕様書 1.2）。日曜は前の週に含める。 */
-export function mondayOf(date: Date): string {
+/* 週の起点。日曜始まりの7日間（変更記録 3.10。仕様書 1.2 は月曜始まりだった）。 */
+export function weekStartOf(date: Date): string {
   const utc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
-  const day = new Date(utc).getUTCDay(); // 0=日
-  const back = day === 0 ? 6 : day - 1;
+  const back = new Date(utc).getUTCDay(); // 0=日
   return new Date(utc - back * 86400000).toISOString().slice(0, 10);
 }
 

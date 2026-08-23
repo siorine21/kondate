@@ -148,7 +148,7 @@ export function generateWeek(input: {
       random,
       byId,
     });
-    assignSidesAndSoups({ days, sides, soups, byId });
+    assignSidesAndSoups({ days, sides, soups, byId, request });
 
     violations = validateWeek({ weekStart, days, byId, settings, history });
     if (violations.length === 0) break;
@@ -310,8 +310,17 @@ function assignSidesAndSoups(input: {
   sides: readonly PlannerRecipe[];
   soups: readonly PlannerRecipe[];
   byId: (id: string | null) => PlannerRecipe | null;
+  request: PlanRequest;
 }) {
-  const { days, sides, soups, byId } = input;
+  const { days, sides, soups, byId, request } = input;
+
+  /* 手で選んだ日は自動で選び直さない。 */
+  const pinnedSides = new Map(
+    (request.fixedSides ?? []).map((pin) => [pin.date, pin.recipeId]),
+  );
+  const pinnedSoups = new Map(
+    (request.fixedSoups ?? []).map((pin) => [pin.date, pin.recipeId]),
+  );
 
   for (const [index, day] of days.entries()) {
     if (day.entryType !== "cook") {
@@ -319,6 +328,14 @@ function assignSidesAndSoups(input: {
       day.soupId = null;
       continue;
     }
+
+    if (pinnedSides.has(day.date)) {
+      day.sideId = pinnedSides.get(day.date) ?? null;
+    }
+    if (pinnedSoups.has(day.date)) {
+      day.soupId = pinnedSoups.get(day.date) ?? null;
+    }
+    if (pinnedSides.has(day.date) && pinnedSoups.has(day.date)) continue;
 
     const main = byId(day.mainId);
     const covered = new Set(main?.foodGroups ?? []);
@@ -329,15 +346,19 @@ function assignSidesAndSoups(input: {
     const recentSides = recentIds(days, index, (d) => d.sideId);
     const recentSoups = recentIds(days, index, (d) => d.soupId);
 
-    const side = pickFilling(sides, missing, recentSides);
-    day.sideId = side?.id ?? null;
+    const side = pinnedSides.has(day.date)
+      ? byId(day.sideId)
+      : (pickFilling(sides, missing, recentSides) ?? null);
+    if (!pinnedSides.has(day.date)) day.sideId = side?.id ?? null;
     for (const group of side?.foodGroups ?? []) covered.add(group);
 
-    const stillMissing = FOOD_GROUPS.filter((group) => !covered.has(group));
-    day.soupId = pickFilling(soups, stillMissing, recentSoups)?.id ?? null;
+    if (!pinnedSoups.has(day.date)) {
+      const stillMissing = FOOD_GROUPS.filter((group) => !covered.has(group));
+      day.soupId = pickFilling(soups, stillMissing, recentSoups)?.id ?? null;
+    }
   }
 
-  fillSoyWithSides({ days, sides, soups, byId });
+  fillSoyWithSides({ days, sides, soups, byId, pinnedSides });
 }
 
 /* 大豆製品は主菜または副菜で週2回以上（7.1）。
@@ -348,8 +369,9 @@ function fillSoyWithSides(input: {
   sides: readonly PlannerRecipe[];
   soups: readonly PlannerRecipe[];
   byId: (id: string | null) => PlannerRecipe | null;
+  pinnedSides: ReadonlyMap<string, string | null>;
 }) {
-  const { days, sides, soups, byId } = input;
+  const { days, sides, soups, byId, pinnedSides } = input;
 
   const soySides = sides.filter((recipe) => recipe.mainProtein === "soy");
   if (soySides.length === 0) return;
@@ -365,6 +387,8 @@ function fillSoyWithSides(input: {
   for (const day of cookDays) {
     if (count >= 2) break;
     if (hasSoy(day)) continue;
+    /* 手で選んだ副菜は動かさない。 */
+    if (pinnedSides.has(day.date)) continue;
 
     const main = byId(day.mainId);
     const covered = new Set(main?.foodGroups ?? []);

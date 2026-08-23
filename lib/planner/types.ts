@@ -43,6 +43,10 @@ export type PlanRequest = {
   fixedDays?: { date: string; recipeId: string }[];
   /* 自炊しない日。 */
   noCookDays?: { date: string; entryType: EntryType }[];
+  /* 手で選んだ副菜・汁物。null は「つけない」。
+     渡した日は自動で選び直さない。 */
+  fixedSides?: { date: string; recipeId: string | null }[];
+  fixedSoups?: { date: string; recipeId: string | null }[];
   /* リクエストのタグ。該当するレシピを押し上げる（7.2）。 */
   tags?: string[];
 };

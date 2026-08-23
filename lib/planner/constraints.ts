@@ -12,8 +12,9 @@ import type {
    直すのは generate 側の役目（7.2-5）。 */
 
 export function isWeekend(weekStart: string, date: string): boolean {
-  /* 週は月曜始まり（仕様書 1.2）。5・6 番目が土日。 */
-  return dayIndex(weekStart, date) >= 5;
+  /* 週は日曜始まり（変更記録 3.10）。1番目の日曜と7番目の土曜が休日。 */
+  const index = dayIndex(weekStart, date);
+  return index === 0 || index === 6;
 }
 
 export function dayIndex(weekStart: string, date: string): number {
