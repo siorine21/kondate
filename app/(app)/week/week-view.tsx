@@ -187,12 +187,13 @@ function DayCard({
         <div className="mt-2.5 flex gap-1.5">
           <SmallButton
             disabled={pending || day.locked || day.entryType !== "cook"}
+            grow={2}
             onClick={() => onReroll(day.date)}
           >
-            {pending ? "選び直しています" : "差し替え"}
+            {pending ? "選び直しています" : "おまかせで選び直す"}
           </SmallButton>
           <SmallButton onClick={onToggleEdit}>
-            {editing ? "閉じる" : "変える"}
+            {editing ? "閉じる" : "変更"}
           </SmallButton>
         </div>
 
@@ -340,7 +341,11 @@ function Picker({
   );
 }
 
-/* 固定の鍵。カードの右上に置く（押した状態が見えるようにする）。 */
+/* 固定の鍵。カードの右上に置く。
+
+   絵文字は端末によって形も色も変わるため、自分で描く。
+   閉じているときは面で塗り、開いているときは線だけにして、
+   形と濃さの両方で違いが出るようにする。 */
 function LockButton({
   locked,
   onClick,
@@ -352,15 +357,47 @@ function LockButton({
     <button
       aria-label={locked ? "固定を外す" : "この日を固定する"}
       aria-pressed={locked}
-      className={`flex h-[44px] w-[44px] items-center justify-center rounded-[10px] border text-[16px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
-        locked ? "border-ai bg-ai-soft" : "border-line bg-card"
+      className={`flex h-[44px] w-[44px] items-center justify-center rounded-[10px] border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
+        locked
+          ? "border-ai bg-ai text-white"
+          : "border-line bg-card text-ink-3"
       }`}
       onClick={onClick}
       type="button"
     >
-      <span aria-hidden className={locked ? "" : "opacity-35"}>
-        {locked ? "🔒" : "🔓"}
-      </span>
+      <svg
+        aria-hidden
+        fill="none"
+        height="20"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.6"
+        viewBox="0 0 24 24"
+        width="20"
+      >
+        {/* つる。閉じているときは本体につながり、開いているときは外れる。 */}
+        <path
+          d={
+            locked
+              ? /* 両脚が本体に入る。閉じている。 */
+                "M8 10.5V7a4 4 0 0 1 8 0v3.5"
+              : /* 左脚を短く止めて本体から離す。外れている。 */
+                "M16 10.5V7a4 4 0 0 0-8 0v1"
+          }
+        />
+        {/* 本体。閉じているときだけ塗る。 */}
+        <rect
+          fill={locked ? "currentColor" : "none"}
+          height="10"
+          rx="2.2"
+          width="14"
+          x="5"
+          y="10.5"
+        />
+        {locked ? (
+          <circle cx="12" cy="15.5" fill="var(--color-ai)" r="1.4" stroke="none" />
+        ) : null}
+      </svg>
     </button>
   );
 }
@@ -368,15 +405,19 @@ function LockButton({
 function SmallButton({
   children,
   disabled,
+  grow,
   onClick,
 }: {
   children: React.ReactNode;
   disabled?: boolean;
+  grow?: 2;
   onClick: () => void;
 }) {
   return (
     <button
-      className="min-h-[38px] flex-1 rounded-[8px] border border-line px-2 text-[12px] text-ink disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+      className={`min-h-[42px] rounded-[8px] border border-line px-2 text-[12px] text-ink disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
+        grow === 2 ? "flex-[2]" : "flex-1"
+      }`}
       disabled={disabled}
       onClick={onClick}
       type="button"
