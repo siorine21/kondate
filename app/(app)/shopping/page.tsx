@@ -3,7 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { BackLink } from "@/app/(app)/back-link";
-import { SHOP_CATEGORY_LABEL, formatQuantity } from "@/lib/labels";
+import {
+  SHOP_CATEGORY_LABEL,
+  formatQuantity,
+  quantityStep,
+} from "@/lib/labels";
 import { weekStartOf } from "@/lib/plan-mapping";
 import { SHOP_CATEGORY_ORDER } from "@/lib/shop-order";
 import { createClient } from "@/lib/supabase/client";
@@ -146,6 +150,38 @@ export default function ShoppingPage() {
     }
   }
 
+  /* 在庫があるときや、その日だけ多めに作るときに数を直せるようにする。
+     刻みは単位と今の値から決める（g・ml は10、端数のあるものは4分の1）。 */
+  async function adjust(item: Item, direction: 1 | -1) {
+    if (!items || item.total_qty === null) return;
+
+    const step = quantityStep(item.total_qty, item.unit);
+    const next = Math.max(
+      0,
+      Math.round((item.total_qty + step * direction) * 100) / 100,
+    );
+    if (next === item.total_qty) return;
+
+    const before = items;
+    setItems(
+      items.map((row) =>
+        row.id === item.id ? { ...row, total_qty: next } : row,
+      ),
+    );
+    setError("");
+
+    const supabase = createClient();
+    const { error: saveError } = await supabase
+      .from("shopping_items")
+      .update({ total_qty: next })
+      .eq("id", item.id);
+
+    if (saveError) {
+      setItems(before); // 保存できていないので見た目も戻す
+      setError("変更できませんでした。時間を置いて試してください。");
+    }
+  }
+
   const remaining = items?.filter((item) => !item.checked).length ?? 0;
 
   const groups = SHOP_CATEGORY_ORDER.map((category) => ({
@@ -198,10 +234,13 @@ export default function ShoppingPage() {
               </h2>
               <ul>
                 {group.rows.map((item) => (
-                  <li key={item.id}>
+                  <li
+                    className="flex items-center gap-1 border-b border-line/60"
+                    key={item.id}
+                  >
                     <button
                       aria-pressed={item.checked}
-                      className="flex min-h-[48px] w-full items-center gap-3 border-b border-line/60 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+                      className="flex min-h-[52px] min-w-0 flex-1 items-center gap-3 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                       onClick={() => void toggle(item)}
                       type="button"
                     >
@@ -215,22 +254,43 @@ export default function ShoppingPage() {
                       >
                         {item.checked ? "✓" : ""}
                       </span>
-                      <span
-                        className={`min-w-0 flex-1 text-[14px] ${
-                          item.checked ? "text-ink-3 line-through" : "text-ink"
-                        }`}
-                      >
-                        {item.name}
-                      </span>
-                      {item.checked && item.checked_by ? (
-                        <span className="rounded-[5px] bg-chip px-2 py-[3px] text-[10.5px] text-ink-2">
-                          {names[item.checked_by] ?? "だれか"}
+                      <span className="min-w-0 flex-1">
+                        <span
+                          className={`block text-[14px] ${
+                            item.checked ? "text-ink-3 line-through" : "text-ink"
+                          }`}
+                        >
+                          {item.name}
                         </span>
-                      ) : null}
-                      <span className="font-mono text-[11.5px] text-ink-3">
-                        {formatQuantity(item.total_qty, item.unit)}
+                        {item.checked && item.checked_by ? (
+                          <span className="mt-[2px] block text-[10.5px] text-ink-3">
+                            {names[item.checked_by] ?? "だれか"}が買いました
+                          </span>
+                        ) : null}
                       </span>
                     </button>
+
+                    <div className="flex flex-shrink-0 items-center">
+                      <StepButton
+                        disabled={
+                          item.total_qty === null || item.total_qty === 0
+                        }
+                        label={`${item.name} を減らす`}
+                        onClick={() => void adjust(item, -1)}
+                      >
+                        −
+                      </StepButton>
+                      <span className="min-w-[58px] text-center font-mono text-[11.5px] text-ink-2">
+                        {formatQuantity(item.total_qty, item.unit)}
+                      </span>
+                      <StepButton
+                        disabled={item.total_qty === null}
+                        label={`${item.name} を増やす`}
+                        onClick={() => void adjust(item, 1)}
+                      >
+                        ＋
+                      </StepButton>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -239,5 +299,31 @@ export default function ShoppingPage() {
         </>
       )}
     </main>
+  );
+}
+
+/* 数量の増減。数の左右に置く。
+   分量が「適量」の材料は増減できないので押せなくする。 */
+function StepButton({
+  children,
+  disabled,
+  label,
+  onClick,
+}: {
+  children: React.ReactNode;
+  disabled?: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      aria-label={label}
+      className="flex h-[44px] w-[40px] items-center justify-center rounded-[8px] text-[17px] text-ink-2 disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+      disabled={disabled}
+      onClick={onClick}
+      type="button"
+    >
+      {children}
+    </button>
   );
 }
