@@ -284,7 +284,7 @@ export default function WeekPage() {
     if (!result.ok) {
       setBusy("");
       setError(
-        `主菜が${result.have}件しかありません。あと${result.need - result.have}件登録すると献立を作れます。`,
+        `主菜が${result.total}件しかありません。あと${result.need - result.total}件登録すると献立を作れます。`,
       );
       return;
     }

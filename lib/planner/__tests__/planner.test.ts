@@ -166,7 +166,7 @@ test("主菜が足りないときは、不足件数を添えて断る", () => {
 
   if (result.ok) throw new Error("足りないのに生成してしまった");
   assert.equal(result.reason, "not_enough_mains");
-  assert.equal(result.have, 1);
+  assert.equal(result.total, 1);
   assert.equal(result.need, 10);
 });
 
@@ -235,6 +235,44 @@ test("日曜と土曜が休日、月〜金が平日として扱われる", () =>
       `${day.date} は平日なのに ${main?.cookTimeMin}分`,
     );
   }
+});
+
+test("先週使った主菜で候補が尽きても、間隔を縮めて組む", () => {
+  /* 実際に起きた状況の再現。
+     主菜が12件あり、先週6日ぶん使うと残りは6件。
+     14日空ける決まりのままだと候補が10件に届かず、以前は組めなかった。 */
+  const usedLastWeek = recipes
+    .filter((recipe) => recipe.dishType === "main")
+    .slice(0, 6)
+    .map((recipe, index) => ({
+      recipeId: recipe.id,
+      date: `2026-08-${17 + index}`,
+    }));
+
+  const result = generate(31, { history: usedLastWeek });
+  if (!result.ok) throw new Error("候補が尽きたまま組めなかった");
+
+  for (const day of result.plan.days) {
+    assert.ok(day.mainId, `${day.date} の主菜が空`);
+  }
+
+  const relaxed = result.plan.violations.find(
+    (v) => v.kind === "repeat_gap_relaxed",
+  );
+  assert.ok(relaxed, "間隔を縮めたことが伝わっていない");
+  if (relaxed?.kind === "repeat_gap_relaxed") {
+    assert.equal(relaxed.from, 14);
+    assert.ok(relaxed.to < 14 && relaxed.to >= 0);
+  }
+});
+
+test("候補が足りているときは、間隔を縮めない", () => {
+  const result = generate(32);
+  if (!result.ok) throw new Error("生成できなかった");
+  assert.ok(
+    !result.plan.violations.some((v) => v.kind === "repeat_gap_relaxed"),
+    "縮める必要がないのに縮めている",
+  );
 });
 
 test("1日差し替えは、その日だけ変えて他の日を残す", () => {

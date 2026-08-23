@@ -68,7 +68,10 @@ export type Violation =
   | { kind: "main_repeated"; date: string; recipeId: string }
   | { kind: "category_three_in_a_row"; dates: string[] }
   | { kind: "allergy_included"; date: string; recipeId: string }
-  | { kind: "cook_time_over"; date: string; recipeId: string; limit: number };
+  | { kind: "cook_time_over"; date: string; recipeId: string; limit: number }
+  /* 登録が少なく、同じ主菜を空ける日数を縮めたときに出す。
+     制約違反ではないが、黙って条件を変えたことは伝える。 */
+  | { kind: "repeat_gap_relaxed"; from: number; to: number };
 
 export type GeneratedPlan = {
   weekStart: string;
@@ -80,4 +83,10 @@ export type GeneratedPlan = {
 
 export type PlanResult =
   | { ok: true; plan: GeneratedPlan }
-  | { ok: false; reason: "not_enough_mains"; have: number; need: number };
+  | {
+      ok: false;
+      reason: "not_enough_mains";
+      /* 登録されている主菜の総数。 */
+      total: number;
+      need: number;
+    };

@@ -21,6 +21,8 @@ function describe(violation: Violation): string {
       return "アレルギーの食材が入っています";
     case "cook_time_over":
       return `調理時間が上限（${violation.limit}分）を超える日があります`;
+    case "repeat_gap_relaxed":
+      return `レシピが少ないため、同じ主菜を空ける日数を${violation.from}日から${violation.to}日に縮めました`;
   }
 }
 
@@ -34,20 +36,33 @@ export function Violations({
   /* 同じ種類は1行にまとめる。 */
   const lines = [...new Set(violations.map(describe))];
 
+  /* 間隔を縮めただけなら、直す先は「主菜を増やす」だけ。
+     調理時間の話を混ぜると、どこを触ればよいか分からなくなる。 */
+  const onlyRelaxed = violations.every(
+    (violation) => violation.kind === "repeat_gap_relaxed",
+  );
+
   return (
     <section className="mt-3 rounded-card border border-line bg-card p-3.5">
       <p className="font-mono text-[9.5px] tracking-[0.14em] text-ink-3">
-        満たせなかった条件
+        条件について
       </p>
       <ul className="mt-1.5">
         {lines.map((line) => (
-          <li className="text-[12.5px] leading-[1.9] text-meat" key={line}>
+          <li
+            className={`text-[12.5px] leading-[1.9] ${
+              onlyRelaxed ? "text-ink-2" : "text-meat"
+            }`}
+            key={line}
+          >
             {line}
           </li>
         ))}
       </ul>
       <p className="mt-1.5 text-[11.5px] leading-[1.8] text-ink-3">
-        レシピを増やすか、設定の調理時間の上限をゆるめると収まります。
+        {onlyRelaxed
+          ? "主菜を増やすと、同じ料理が出る間隔を広げられます。"
+          : "主菜を増やすか、設定の調理時間の上限をゆるめると収まります。"}
       </p>
     </section>
   );

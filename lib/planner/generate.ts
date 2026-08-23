@@ -7,6 +7,7 @@ import {
 import { createRandom, type Random } from "./random.ts";
 import type {
   MainHistory,
+  Violation,
   PlanDay,
   PlanRequest,
   PlanResult,
@@ -92,31 +93,62 @@ export function generateWeek(input: {
   const avoided = [...settings.allergies, ...settings.disliked];
   const usable = recipes.filter((recipe) => !containsAvoided(recipe, avoided));
 
-  const recentlyUsed = new Set(
-    history
-      .filter((entry) =>
-        dates.some(
-          (date) =>
-            Math.abs(daysBetween(entry.date, date)) < settings.repeatGapDays,
-        ),
-      )
-      .map((entry) => entry.recipeId),
-  );
-
-  const mains = usable.filter(
-    (recipe) => recipe.dishType === "main" && !recentlyUsed.has(recipe.id),
-  );
+  const allMains = usable.filter((recipe) => recipe.dishType === "main");
   const sides = usable.filter((recipe) => recipe.dishType === "side");
   const soups = usable.filter((recipe) => recipe.dishType === "soup");
 
-  if (mains.length < MIN_MAIN_POOL) {
+  /* 登録そのものが足りないときは、間隔をどう縮めても組めない。 */
+  if (allMains.length < MIN_MAIN_POOL) {
     return {
       ok: false,
       reason: "not_enough_mains",
-      have: mains.length,
+      total: allMains.length,
       need: MIN_MAIN_POOL,
     };
   }
+
+  const poolWithGap = (gap: number) => {
+    const recentlyUsed = new Set(
+      history
+        .filter((entry) =>
+          dates.some(
+            (date) => Math.abs(daysBetween(entry.date, date)) < gap,
+          ),
+        )
+        .map((entry) => entry.recipeId),
+    );
+    return allMains.filter((recipe) => !recentlyUsed.has(recipe.id));
+  };
+
+  /* 先週使った主菜を全部外すと、登録が少ないうちは候補が尽きる。
+     たとえば主菜15件で7日ぶん使うと、翌週に残るのは8件しかない。
+
+     組めないと言って止めるより、同じ主菜を空ける日数を縮めて組む。
+     縮めたことは violations に載せて画面に出す（黙って変えない）。 */
+  let effectiveGap = settings.repeatGapDays;
+  let mains = poolWithGap(effectiveGap);
+  while (mains.length < MIN_MAIN_POOL && effectiveGap > 0) {
+    effectiveGap -= 1;
+    mains = poolWithGap(effectiveGap);
+  }
+
+  const relaxed: Violation[] =
+    effectiveGap === settings.repeatGapDays
+      ? []
+      : [
+          {
+            kind: "repeat_gap_relaxed",
+            from: settings.repeatGapDays,
+            to: effectiveGap,
+          },
+        ];
+
+  /* 縮めた間隔で検査する。縮めた事実は別に伝えるので、
+     同じ主菜が出たことを二重に責めない。 */
+  const effectiveSettings: PlannerSettings = {
+    ...settings,
+    repeatGapDays: effectiveGap,
+  };
 
   /* 3〜5. 主菜を決め、副菜と汁物を足し、ハード制約を確かめる。
      満たせない日を開け直して10回まで組み直す（7.2-5）。 */
@@ -125,7 +157,7 @@ export function generateWeek(input: {
     weekStart,
     days,
     byId,
-    settings,
+    settings: effectiveSettings,
     history,
   });
 
@@ -142,7 +174,7 @@ export function generateWeek(input: {
       days,
       open,
       mains,
-      settings,
+      settings: effectiveSettings,
       ratings,
       request,
       random,
@@ -150,7 +182,13 @@ export function generateWeek(input: {
     });
     assignSidesAndSoups({ days, sides, soups, byId, request });
 
-    violations = validateWeek({ weekStart, days, byId, settings, history });
+    violations = validateWeek({
+      weekStart,
+      days,
+      byId,
+      settings: effectiveSettings,
+      history,
+    });
     if (violations.length === 0) break;
 
     /* 違反に関わる日だけを開け直す。固定枠は動かさない。 */
@@ -167,7 +205,7 @@ export function generateWeek(input: {
 
   return {
     ok: true,
-    plan: { weekStart, days, violations, attempts },
+    plan: { weekStart, days, violations: [...relaxed, ...violations], attempts },
   };
 }
 
