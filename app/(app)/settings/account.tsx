@@ -29,7 +29,7 @@ export function AccountSection({
         </Row>
         <DisplayName current={displayName} onRenamed={onRenamed} />
         <Row label="新規メンバーの追加">
-          <span className="rounded-[5px] bg-[#EDF0EA] px-2 py-[3px] font-mono text-[9.5px] tracking-[0.1em] text-ink-2">
+          <span className="rounded-[5px] bg-chip px-2 py-[3px] font-mono text-[9.5px] tracking-[0.1em] text-ink-2">
             停止中
           </span>
         </Row>
@@ -107,7 +107,7 @@ function DisplayName({
   }
 
   return (
-    <div className="border-b border-[#EFF1EC] py-3 last:border-0">
+    <div className="border-b border-line/60 py-3 last:border-0">
       <label className={labelClass} htmlFor="display-name">
         表示名
       </label>

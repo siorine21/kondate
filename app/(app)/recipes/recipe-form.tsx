@@ -415,7 +415,7 @@ export function RecipeForm({
       </div>
 
       {message ? (
-        <p className="mt-3 text-[12.5px] text-meat" role="alert">
+        <p className="mt-3 text-[12.5px] text-danger" role="alert">
           {message}
         </p>
       ) : null}

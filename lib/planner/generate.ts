@@ -69,6 +69,7 @@ export function generateWeek(input: {
   const days: PlanDay[] = dates.map((date) => ({
     date,
     entryType: "cook",
+    undecided: false,
     locked: false,
     mainId: null,
     sideId: null,
@@ -81,10 +82,19 @@ export function generateWeek(input: {
     day.mainId = fixed.recipeId;
     day.locked = true;
   }
+  for (const date of request.undecidedDays ?? []) {
+    const day = days.find((d) => d.date === date);
+    if (!day) continue;
+    day.undecided = true;
+    day.mainId = null;
+    day.sideId = null;
+    day.soupId = null;
+  }
   for (const noCook of request.noCookDays ?? []) {
     const day = days.find((d) => d.date === noCook.date);
     if (!day) continue;
     day.entryType = noCook.entryType;
+    day.undecided = false;
     day.locked = true;
     day.mainId = null;
   }
@@ -161,7 +171,10 @@ export function generateWeek(input: {
     history,
   });
 
-  let open = days.filter((day) => day.entryType === "cook" && !day.locked);
+  const fillable = (day: PlanDay) =>
+    day.entryType === "cook" && !day.undecided && !day.locked;
+
+  let open = days.filter(fillable);
 
   while (attempts < 10) {
     attempts += 1;
@@ -193,14 +206,9 @@ export function generateWeek(input: {
 
     /* 違反に関わる日だけを開け直す。固定枠は動かさない。 */
     const stuck = new Set(datesInViolations(violations));
-    open = days.filter(
-      (day) =>
-        day.entryType === "cook" && !day.locked && stuck.has(day.date),
-    );
+    open = days.filter((day) => fillable(day) && stuck.has(day.date));
     /* 特定の日に紐づかない違反（魚や大豆の不足）は週全体を組み直す。 */
-    if (open.length === 0) {
-      open = days.filter((day) => day.entryType === "cook" && !day.locked);
-    }
+    if (open.length === 0) open = days.filter(fillable);
   }
 
   return {
@@ -361,7 +369,7 @@ function assignSidesAndSoups(input: {
   );
 
   for (const [index, day] of days.entries()) {
-    if (day.entryType !== "cook") {
+    if (day.entryType !== "cook" || day.undecided) {
       day.sideId = null;
       day.soupId = null;
       continue;
@@ -419,7 +427,9 @@ function fillSoyWithSides(input: {
       (recipe) => recipe?.mainProtein === "soy",
     );
 
-  const cookDays = days.filter((day) => day.entryType === "cook");
+  const cookDays = days.filter(
+    (day) => day.entryType === "cook" && !day.undecided,
+  );
   let count = cookDays.filter(hasSoy).length;
 
   for (const day of cookDays) {

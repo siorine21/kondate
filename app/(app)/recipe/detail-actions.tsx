@@ -80,7 +80,7 @@ export function RatingStars({
         </div>
       </div>
       {error ? (
-        <p className="mt-2 text-[12px] text-meat" role="alert">
+        <p className="mt-2 text-[12px] text-danger" role="alert">
           {error}
         </p>
       ) : null}
@@ -141,7 +141,7 @@ export function ArchiveButton({ recipeId }: { recipeId: string }) {
           やめる
         </button>
         <button
-          className="flex-1 rounded-[9px] bg-meat py-2.5 text-[12.5px] font-medium text-white disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+          className="flex-1 rounded-[9px] bg-danger py-2.5 text-[12.5px] font-medium text-white disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           disabled={pending}
           onClick={archive}
           type="button"
@@ -150,7 +150,7 @@ export function ArchiveButton({ recipeId }: { recipeId: string }) {
         </button>
       </div>
       {error ? (
-        <p className="mt-2 text-[12px] text-meat" role="alert">
+        <p className="mt-2 text-[12px] text-danger" role="alert">
           {error}
         </p>
       ) : null}

@@ -179,7 +179,7 @@ export function SeedButton({
         {pending ? "読み込んでいます" : `${missingNames.length}品を読み込む`}
       </button>
       {error ? (
-        <p className="mt-2 text-[12px] text-meat" role="alert">
+        <p className="mt-2 text-[12px] text-danger" role="alert">
           {error}
         </p>
       ) : null}

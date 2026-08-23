@@ -201,6 +201,8 @@ export default function WeekPage() {
 
     const items: ItemInsert[] = [];
     for (const day of plan.days) {
+      /* 未定の日は行を作らない。読み戻したときに未定として復元される。 */
+      if (day.undecided) continue;
       if (day.entryType !== "cook") {
         items.push({
           plan_id: planRow.id,
@@ -308,7 +310,9 @@ export default function WeekPage() {
     options: { onlyLocked?: boolean; recomputeDate?: string } = {},
   ) {
     const { onlyLocked = false, recomputeDate } = options;
-    const cookDays = days.filter((day) => day.entryType === "cook");
+    const cookDays = days.filter(
+      (day) => day.entryType === "cook" && !day.undecided,
+    );
     const keep = (day: PlanDay) => day.date !== recomputeDate;
 
     return {
@@ -320,6 +324,9 @@ export default function WeekPage() {
       noCookDays: days
         .filter((day) => day.entryType !== "cook")
         .map((day) => ({ date: day.date, entryType: day.entryType })),
+      undecidedDays: days
+        .filter((day) => day.undecided)
+        .map((day) => day.date),
       /* 週ごと組み直すとき以外は、副菜と汁物もそのまま残す。
          1日いじっただけで他の日の副菜が入れ替わると分かりにくい。 */
       fixedSides: onlyLocked
@@ -413,7 +420,7 @@ export default function WeekPage() {
       </div>
 
       {error ? (
-        <p className="mt-3 text-[12.5px] leading-[1.8] text-meat" role="alert">
+        <p className="mt-3 text-[12.5px] leading-[1.8] text-danger" role="alert">
           {error}
         </p>
       ) : null}
@@ -440,7 +447,7 @@ export default function WeekPage() {
         <>
           {data.confirmed ? (
             <div className="mt-3 flex items-center gap-3">
-              <p className="text-[12px] text-soy" role="status">
+              <p className="text-[12px] text-ok" role="status">
                 この内容で確定しています
               </p>
               <Link
@@ -469,9 +476,20 @@ export default function WeekPage() {
                 }),
               );
             }}
-            onSetEntryType={(date, entryType: EntryType) => {
+            onSetDayState={(date, state) => {
               const days = plan.days.map((day) =>
-                day.date === date ? { ...day, entryType } : day,
+                day.date === date
+                  ? state === "undecided"
+                    ? {
+                        ...day,
+                        undecided: true,
+                        entryType: "cook" as const,
+                        mainId: null,
+                        sideId: null,
+                        soupId: null,
+                      }
+                    : { ...day, undecided: false, entryType: state }
+                  : day,
               );
               void run("変更", () => build(requestFrom(days)));
             }}
@@ -581,6 +599,9 @@ function itemsToPlan(
   const days: PlanDay[] = Array.from({ length: 7 }, (_, i) => ({
     date: addDays(weekStart, i),
     entryType: "cook",
+    /* 行が1つも無い日は「まだ決めていない」。
+       生成した日は必ず主菜の行を持つので、これで見分けられる。 */
+    undecided: true,
     locked: false,
     mainId: null,
     sideId: null,
@@ -591,6 +612,7 @@ function itemsToPlan(
     const day = days.find((d) => d.date === item.date);
     if (!day) continue;
     day.entryType = item.entry_type;
+    day.undecided = false;
     day.locked = day.locked || item.locked;
     if (item.slot === "main") day.mainId = item.recipe_id;
     if (item.slot === "side") day.sideId = item.recipe_id;

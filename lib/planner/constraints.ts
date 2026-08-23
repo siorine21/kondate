@@ -53,6 +53,8 @@ export function daysBetween(from: string, to: string): number {
 
 type Lookup = (id: string | null) => PlannerRecipe | null;
 
+const isCooked = (day: PlanDay) => day.entryType === "cook" && !day.undecided;
+
 export function validateWeek(input: {
   weekStart: string;
   days: readonly PlanDay[];
@@ -63,8 +65,11 @@ export function validateWeek(input: {
   const { weekStart, days, byId, settings, history } = input;
   const violations: Violation[] = [];
 
-  /* 自炊しない日は判定から外す。品が無いので満たしようがない。 */
-  const cookDays = days.filter((day) => day.entryType === "cook");
+  /* 自炊しない日と、まだ決めていない日は判定から外す。
+     品が無いので満たしようがない。 */
+  const cookDays = days.filter(
+    (day) => day.entryType === "cook" && !day.undecided,
+  );
 
   const mainOf = (day: PlanDay) => byId(day.mainId);
   const dishesOf = (day: PlanDay) =>
@@ -102,7 +107,7 @@ export function validateWeek(input: {
   for (let i = 1; i < days.length; i += 1) {
     const previous = days[i - 1];
     const current = days[i];
-    if (previous.entryType !== "cook" || current.entryType !== "cook") continue;
+    if (!isCooked(previous) || !isCooked(current)) continue;
     if (
       mainOf(previous)?.method === "fry" &&
       mainOf(current)?.method === "fry"
@@ -137,7 +142,7 @@ export function validateWeek(input: {
   /* 同カテゴリの3日連続禁止 */
   for (let i = 2; i < days.length; i += 1) {
     const window = [days[i - 2], days[i - 1], days[i]];
-    if (window.some((day) => day.entryType !== "cook")) continue;
+    if (window.some((day) => !isCooked(day))) continue;
     const categories = window.map((day) => mainOf(day)?.category);
     if (categories[0] && categories.every((c) => c === categories[0])) {
       violations.push({

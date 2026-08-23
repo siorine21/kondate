@@ -91,7 +91,7 @@ export function LoginForm() {
       </div>
 
       {message ? (
-        <p className="mt-3 text-[12.5px] leading-[1.7] text-meat" role="alert">
+        <p className="mt-3 text-[12.5px] leading-[1.7] text-danger" role="alert">
           {message}
         </p>
       ) : null}
@@ -161,7 +161,7 @@ function ForgotPassword({ email }: { email: string }) {
         {sending ? "送っています" : "パスワードを忘れた場合"}
       </button>
       {error ? (
-        <p className="mt-1 text-[12px] text-meat" role="alert">
+        <p className="mt-1 text-[12px] text-danger" role="alert">
           {error}
         </p>
       ) : null}

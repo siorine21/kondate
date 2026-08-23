@@ -18,12 +18,27 @@ import type { EntryType } from "@/lib/supabase/types";
    たんぱく源リボン、各日カード、1日差し替え、手動編集。
    計算は planner が済ませたものを受け取るだけで、ここでは組まない。 */
 
-const ENTRY_LABEL: Record<EntryType, string> = {
+/* その日の扱い。未定は entry_type ではなく「行がまだ無い」状態を指す。 */
+export type DayState = EntryType | "undecided";
+
+const STATE_LABEL: Record<DayState, string> = {
+  undecided: "未定",
   cook: "作る",
   eatout: "外食",
   batch: "作りおき",
   leftover: "残りもの",
 };
+
+const STATE_ORDER: readonly DayState[] = [
+  "undecided",
+  "cook",
+  "eatout",
+  "batch",
+  "leftover",
+];
+
+const stateOf = (day: PlanDay): DayState =>
+  day.undecided ? "undecided" : day.entryType;
 
 const PROTEIN_BAR: Record<string, string> = {
   ...PROTEIN_BG,
@@ -36,7 +51,7 @@ export function WeekView({
   pendingDate,
   onReroll,
   onToggleLock,
-  onSetEntryType,
+  onSetDayState,
   onSetMain,
   onSetSide,
   onSetSoup,
@@ -46,7 +61,7 @@ export function WeekView({
   pendingDate: string | null;
   onReroll: (date: string) => void;
   onToggleLock: (date: string) => void;
-  onSetEntryType: (date: string, entryType: EntryType) => void;
+  onSetDayState: (date: string, state: DayState) => void;
   onSetMain: (date: string, recipeId: string) => void;
   onSetSide: (date: string, recipeId: string | null) => void;
   onSetSoup: (date: string, recipeId: string | null) => void;
@@ -65,12 +80,15 @@ export function WeekView({
       >
         {plan.days.map((day) => {
           const main = byId(day.mainId);
-          const protein = day.entryType === "cook" ? main?.mainProtein : "none";
+          const protein =
+            day.entryType === "cook" && !day.undecided
+              ? main?.mainProtein
+              : "none";
           return (
             <span
               className={`flex-1 ${PROTEIN_BAR[protein ?? "none"]}`}
               key={day.date}
-              title={`${formatDay(day.date).day} ${main?.name ?? ENTRY_LABEL[day.entryType]}`}
+              title={`${formatDay(day.date).day} ${main?.name ?? STATE_LABEL[stateOf(day)]}`}
             />
           );
         })}
@@ -83,7 +101,7 @@ export function WeekView({
             day={day}
             editing={editing === day.date}
             key={day.date}
-            onSetEntryType={onSetEntryType}
+            onSetDayState={onSetDayState}
             onSetMain={onSetMain}
             onSetSide={onSetSide}
             onSetSoup={onSetSoup}
@@ -110,7 +128,7 @@ function DayCard({
   onToggleEdit,
   onReroll,
   onToggleLock,
-  onSetEntryType,
+  onSetDayState,
   onSetMain,
   onSetSide,
   onSetSoup,
@@ -123,7 +141,7 @@ function DayCard({
   onToggleEdit: () => void;
   onReroll: (date: string) => void;
   onToggleLock: (date: string) => void;
-  onSetEntryType: (date: string, entryType: EntryType) => void;
+  onSetDayState: (date: string, state: DayState) => void;
   onSetMain: (date: string, recipeId: string) => void;
   onSetSide: (date: string, recipeId: string | null) => void;
   onSetSoup: (date: string, recipeId: string | null) => void;
@@ -132,7 +150,8 @@ function DayCard({
   const main = byId(day.mainId);
   const side = byId(day.sideId);
   const soup = byId(day.soupId);
-  const spine = day.entryType === "cook" ? PROTEIN_BAR[main?.mainProtein ?? "none"] : "bg-line";
+  const cooking = day.entryType === "cook" && !day.undecided;
+  const spine = cooking ? PROTEIN_BAR[main?.mainProtein ?? "none"] : "bg-line";
 
   return (
     <article className="flex overflow-hidden rounded-card border border-line bg-card">
@@ -145,13 +164,13 @@ function DayCard({
           </span>
           <span className="font-mincho text-[13px] text-ink-2">{weekday}</span>
           <span className="ml-auto flex items-center gap-1.5">
-            {main && day.entryType === "cook" ? (
+            {main && cooking ? (
               <>
                 <Tag>{CATEGORY_LABEL[main.category]}</Tag>
                 <Tag>{main.cookTimeMin}分</Tag>
               </>
             ) : (
-              <Tag>{ENTRY_LABEL[day.entryType]}</Tag>
+              <Tag>{STATE_LABEL[stateOf(day)]}</Tag>
             )}
             <LockButton
               locked={day.locked}
@@ -160,9 +179,13 @@ function DayCard({
           </span>
         </div>
 
-        {day.entryType !== "cook" ? (
+        {day.undecided ? (
           <p className="mt-2 text-[13px] text-ink-2">
-            この日は{ENTRY_LABEL[day.entryType]}にしています。
+            まだ決めていません。「変更」から決められます。
+          </p>
+        ) : day.entryType !== "cook" ? (
+          <p className="mt-2 text-[13px] text-ink-2">
+            この日は{STATE_LABEL[day.entryType]}にしています。
           </p>
         ) : main ? (
           <>
@@ -186,7 +209,7 @@ function DayCard({
 
         <div className="mt-2.5 flex gap-1.5">
           <SmallButton
-            disabled={pending || day.locked || day.entryType !== "cook"}
+            disabled={pending || day.locked || !cooking}
             grow={2}
             onClick={() => onReroll(day.date)}
           >
@@ -200,7 +223,7 @@ function DayCard({
         {editing ? (
           <DayEditor
             day={day}
-            onSetEntryType={onSetEntryType}
+            onSetDayState={onSetDayState}
             onSetMain={(id) => {
               onSetMain(day.date, id);
               onToggleEdit();
@@ -218,14 +241,14 @@ function DayCard({
 function DayEditor({
   day,
   recipes,
-  onSetEntryType,
+  onSetDayState,
   onSetMain,
   onSetSide,
   onSetSoup,
 }: {
   day: PlanDay;
   recipes: readonly PlannerRecipe[];
-  onSetEntryType: (date: string, entryType: EntryType) => void;
+  onSetDayState: (date: string, state: DayState) => void;
   onSetMain: (id: string) => void;
   onSetSide: (id: string | null) => void;
   onSetSoup: (id: string | null) => void;
@@ -240,24 +263,24 @@ function DayEditor({
         この日の扱い
       </p>
       <div className="mt-1.5 flex flex-wrap gap-1.5">
-        {(["cook", "eatout", "batch", "leftover"] as const).map((entryType) => (
+        {STATE_ORDER.map((state) => (
           <button
-            aria-pressed={day.entryType === entryType}
-            className={`min-h-[36px] rounded-[8px] border px-3 text-[12px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
-              day.entryType === entryType
-                ? "border-ai bg-ai-soft text-ai"
+            aria-pressed={stateOf(day) === state}
+            className={`min-h-[38px] rounded-[8px] border px-3 text-[12px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
+              stateOf(day) === state
+                ? "border-ai bg-ai-soft font-medium text-ai"
                 : "border-line text-ink-2"
             }`}
-            key={entryType}
-            onClick={() => onSetEntryType(day.date, entryType)}
+            key={state}
+            onClick={() => onSetDayState(day.date, state)}
             type="button"
           >
-            {ENTRY_LABEL[entryType]}
+            {STATE_LABEL[state]}
           </button>
         ))}
       </div>
 
-      {day.entryType === "cook" ? (
+      {day.entryType === "cook" && !day.undecided ? (
         <>
           <Picker
             candidates={mains}
@@ -309,7 +332,7 @@ function Picker({
       <div className="mt-1.5 max-h-[220px] overflow-y-auto rounded-[9px] border border-line">
         {allowNone ? (
           <button
-            className={`flex min-h-[42px] w-full items-center border-b border-[#EFF1EC] px-3 text-left text-[13px] text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
+            className={`flex min-h-[42px] w-full items-center border-b border-line/60 px-3 text-left text-[13px] text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
               selectedId === null ? "bg-ai-soft" : ""
             }`}
             onClick={() => onPick(null)}
@@ -320,7 +343,7 @@ function Picker({
         ) : null}
         {candidates.map((recipe) => (
           <button
-            className={`flex min-h-[42px] w-full items-center gap-2 border-b border-[#EFF1EC] px-3 text-left text-[13px] last:border-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
+            className={`flex min-h-[42px] w-full items-center gap-2 border-b border-line/60 px-3 text-left text-[13px] last:border-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
               recipe.id === selectedId ? "bg-ai-soft" : ""
             }`}
             key={recipe.id}
@@ -429,7 +452,7 @@ function SmallButton({
 
 function Tag({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-[5px] bg-[#EDF0EA] px-2 py-[3px] font-mono text-[9.5px] tracking-[0.08em] text-ink-2">
+    <span className="rounded-[5px] bg-chip px-2 py-[3px] font-mono text-[9.5px] tracking-[0.08em] text-ink-2">
       {children}
     </span>
   );

@@ -39,7 +39,7 @@ export function Row({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-3 border-b border-[#EFF1EC] py-3 last:border-0">
+    <div className="flex items-center gap-3 border-b border-line/60 py-3 last:border-0">
       <span className="text-[13.5px] text-ink">{label}</span>
       <div className="ml-auto flex items-center gap-2">{children}</div>
     </div>
@@ -72,7 +72,7 @@ export function PrimaryButton({
 export function Note({ tone, children }: { tone: "ok" | "error"; children: React.ReactNode }) {
   return (
     <p
-      className={`mt-2 text-[12px] leading-[1.7] ${tone === "ok" ? "text-soy" : "text-meat"}`}
+      className={`mt-2 text-[12px] leading-[1.7] ${tone === "ok" ? "text-ok" : "text-danger"}`}
       role={tone === "error" ? "alert" : "status"}
     >
       {children}

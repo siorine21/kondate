@@ -100,7 +100,7 @@ export default function RecipesPage() {
       ) : null}
 
       {error ? (
-        <p className="mt-4 text-[12.5px] text-meat" role="alert">
+        <p className="mt-4 text-[12.5px] text-danger" role="alert">
           {error}
         </p>
       ) : null}

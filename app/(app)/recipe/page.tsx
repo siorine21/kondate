@@ -178,7 +178,7 @@ function RecipeDetail() {
         ) : (
           ingredients.map((ing) => (
             <div
-              className="flex items-center border-b border-[#EFF1EC] py-[11px] text-[14px] last:border-0"
+              className="flex items-center border-b border-line/60 py-[11px] text-[14px] last:border-0"
               key={ing.id}
             >
               {ing.name}
@@ -219,7 +219,7 @@ function RecipeDetail() {
           <h2 className="mt-[22px] font-mono text-[9.5px] tracking-[0.2em] text-ink-3">
             MEMO
           </h2>
-          <p className="mt-[9px] rounded-[10px] bg-[#EDF0EA] px-[13px] py-3 text-[11.5px] leading-[1.8] text-ink-2">
+          <p className="mt-[9px] rounded-[10px] bg-chip px-[13px] py-3 text-[11.5px] leading-[1.8] text-ink-2">
             {recipe.memo}
           </p>
         </>
@@ -292,7 +292,7 @@ function Tag({
   return (
     <span
       className={`rounded-[5px] px-2 py-[3px] font-mono text-[9.5px] tracking-[0.1em] ${
-        accent ? "bg-ai-soft text-ai" : "bg-[#EDF0EA] text-ink-2"
+        accent ? "bg-ai-soft text-ai" : "bg-chip text-ink-2"
       }`}
     >
       {children}

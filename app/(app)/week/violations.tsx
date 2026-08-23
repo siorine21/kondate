@@ -51,7 +51,7 @@ export function Violations({
         {lines.map((line) => (
           <li
             className={`text-[12.5px] leading-[1.9] ${
-              onlyRelaxed ? "text-ink-2" : "text-meat"
+              onlyRelaxed ? "text-ink-2" : "text-danger"
             }`}
             key={line}
           >

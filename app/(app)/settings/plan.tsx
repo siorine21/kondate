@@ -122,7 +122,7 @@ export function PlanSection({
             value={draft.weekend_max_minutes}
           />
         </Row>
-        <div className="border-b border-[#EFF1EC] py-3 last:border-0">
+        <div className="border-b border-line/60 py-3 last:border-0">
           <span className="text-[13.5px] text-ink">和洋中の比率</span>
           <p className="mt-1 text-[11.5px] leading-[1.8] text-ink-3">
             7日をこの比で割り振ります。既定は 和4・洋1・中2 です。
@@ -287,7 +287,7 @@ function Toggle({
       aria-label={label}
       aria-pressed={checked}
       className={`h-[30px] w-[52px] rounded-full border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
-        checked ? "border-ai bg-ai" : "border-line bg-[#EDF0EA]"
+        checked ? "border-ai bg-ai" : "border-line bg-chip"
       }`}
       onClick={() => onChange(!checked)}
       type="button"
@@ -326,7 +326,7 @@ function ChipList({
   }
 
   return (
-    <div className="border-b border-[#EFF1EC] py-3 last:border-0">
+    <div className="border-b border-line/60 py-3 last:border-0">
       <label className={labelClass} htmlFor={inputId}>
         {label}
       </label>
@@ -336,7 +336,7 @@ function ChipList({
           {values.map((value) => (
             <button
               aria-label={`${value} を外す`}
-              className="min-h-[32px] rounded-[7px] bg-[#EDF0EA] px-2.5 text-[12px] text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+              className="min-h-[32px] rounded-[7px] bg-chip px-2.5 text-[12px] text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               key={value}
               onClick={() => onChange(values.filter((v) => v !== value))}
               type="button"

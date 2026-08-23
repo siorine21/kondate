@@ -167,7 +167,7 @@ export default function ShoppingPage() {
       </header>
 
       {error ? (
-        <p className="mt-3 text-[12.5px] text-meat" role="alert">
+        <p className="mt-3 text-[12.5px] text-danger" role="alert">
           {error}
         </p>
       ) : null}
@@ -201,7 +201,7 @@ export default function ShoppingPage() {
                   <li key={item.id}>
                     <button
                       aria-pressed={item.checked}
-                      className="flex min-h-[48px] w-full items-center gap-3 border-b border-[#EFF1EC] text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+                      className="flex min-h-[48px] w-full items-center gap-3 border-b border-line/60 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                       onClick={() => void toggle(item)}
                       type="button"
                     >
@@ -223,7 +223,7 @@ export default function ShoppingPage() {
                         {item.name}
                       </span>
                       {item.checked && item.checked_by ? (
-                        <span className="rounded-[5px] bg-[#EDF0EA] px-2 py-[3px] text-[10.5px] text-ink-2">
+                        <span className="rounded-[5px] bg-chip px-2 py-[3px] text-[10.5px] text-ink-2">
                           {names[item.checked_by] ?? "だれか"}
                         </span>
                       ) : null}

@@ -43,6 +43,8 @@ export type PlanRequest = {
   fixedDays?: { date: string; recipeId: string }[];
   /* 自炊しない日。 */
   noCookDays?: { date: string; entryType: EntryType }[];
+  /* 未定にする日。品を入れない。 */
+  undecidedDays?: string[];
   /* 手で選んだ副菜・汁物。null は「つけない」。
      渡した日は自動で選び直さない。 */
   fixedSides?: { date: string; recipeId: string | null }[];
@@ -54,6 +56,9 @@ export type PlanRequest = {
 export type PlanDay = {
   date: string;
   entryType: EntryType;
+  /* まだ決めていない日。品を入れず、週次の判定からも外す。
+     「自炊しない」とは別で、あとで決めるという意味。 */
+  undecided: boolean;
   locked: boolean;
   mainId: string | null;
   sideId: string | null;

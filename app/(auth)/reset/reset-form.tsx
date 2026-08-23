@@ -153,7 +153,7 @@ export function ResetForm() {
       </div>
 
       {error ? (
-        <p className="mt-3 text-[12.5px] leading-[1.7] text-meat" role="alert">
+        <p className="mt-3 text-[12.5px] leading-[1.7] text-danger" role="alert">
           {error}
         </p>
       ) : null}

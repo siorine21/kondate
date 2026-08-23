@@ -153,6 +153,35 @@ test("自炊しない日には品を入れない", () => {
   assert.equal(day?.soupId, null);
 });
 
+test("未定の日には品を入れず、週の判定からも外す", () => {
+  const date = "2026-08-26";
+  const result = generate(17, { request: { undecidedDays: [date] } });
+  if (!result.ok) throw new Error("生成できなかった");
+
+  const day = result.plan.days.find((d) => d.date === date);
+  assert.equal(day?.undecided, true);
+  assert.equal(day?.mainId, null);
+  assert.equal(day?.sideId, null);
+  assert.equal(day?.soupId, null);
+
+  /* 品が無いことを理由に「緑黄色野菜がない」と言われない。 */
+  assert.deepEqual(result.plan.violations, []);
+
+  /* ほかの6日はそのまま埋まる。 */
+  for (const other of result.plan.days) {
+    if (other.date === date) continue;
+    assert.ok(other.mainId, `${other.date} の主菜が空`);
+  }
+});
+
+test("未定の日は揚げ物やカテゴリの連続を切る", () => {
+  const result = generate(18, {
+    request: { undecidedDays: ["2026-08-25", "2026-08-26"] },
+  });
+  if (!result.ok) throw new Error("生成できなかった");
+  assert.deepEqual(result.plan.violations, []);
+});
+
 test("主菜が足りないときは、不足件数を添えて断る", () => {
   const few = recipes.filter(
     (recipe) => recipe.dishType !== "main" || recipe.name === "麻婆豆腐",

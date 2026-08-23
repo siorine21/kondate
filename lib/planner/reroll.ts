@@ -27,13 +27,19 @@ export function rerollDay(input: {
   const { plan, date, recipes, settings, history = [], ratings = {}, request = {}, seed } = input;
 
   const target = plan.days.find((day) => day.date === date);
-  if (!target || target.entryType !== "cook") {
+  if (!target || target.entryType !== "cook" || target.undecided) {
     return { ok: true, plan };
   }
 
   /* 対象日以外を固定枠にすると、生成の仕組みをそのまま使い回せる。 */
   const fixedDays = plan.days
-    .filter((day) => day !== target && day.entryType === "cook" && day.mainId)
+    .filter(
+      (day) =>
+        day !== target &&
+        day.entryType === "cook" &&
+        !day.undecided &&
+        day.mainId,
+    )
     .map((day) => ({ date: day.date, recipeId: day.mainId ?? "" }));
 
   const noCookDays = plan.days
@@ -42,12 +48,21 @@ export function rerollDay(input: {
 
   /* 対象日以外の副菜・汁物もそのまま残す。
      主菜を1日変えただけで、他の日の副菜が入れ替わると分かりにくい。 */
-  const fixedSides = plan.days
-    .filter((day) => day !== target && day.entryType === "cook")
-    .map((day) => ({ date: day.date, recipeId: day.sideId }));
-  const fixedSoups = plan.days
-    .filter((day) => day !== target && day.entryType === "cook")
-    .map((day) => ({ date: day.date, recipeId: day.soupId }));
+  const others = plan.days.filter(
+    (day) => day !== target && day.entryType === "cook" && !day.undecided,
+  );
+  const fixedSides = others.map((day) => ({
+    date: day.date,
+    recipeId: day.sideId,
+  }));
+  const fixedSoups = others.map((day) => ({
+    date: day.date,
+    recipeId: day.soupId,
+  }));
+
+  const undecidedDays = plan.days
+    .filter((day) => day.undecided)
+    .map((day) => day.date);
 
   /* いま入っているものは選び直さない（7.3）。 */
   const withoutCurrent = recipes.filter(
@@ -60,7 +75,14 @@ export function rerollDay(input: {
     settings,
     history,
     ratings,
-    request: { ...request, fixedDays, noCookDays, fixedSides, fixedSoups },
+    request: {
+      ...request,
+      fixedDays,
+      noCookDays,
+      undecidedDays,
+      fixedSides,
+      fixedSoups,
+    },
     seed,
   });
 

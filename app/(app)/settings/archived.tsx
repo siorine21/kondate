@@ -49,7 +49,7 @@ export function ArchivedSection({
         <ul>
           {recipes.map((recipe) => (
             <li
-              className="flex items-center gap-3 border-b border-[#EFF1EC] py-2.5 last:border-0"
+              className="flex items-center gap-3 border-b border-line/60 py-2.5 last:border-0"
               key={recipe.id}
             >
               <span className="text-[13.5px] text-ink">{recipe.name}</span>
