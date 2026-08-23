@@ -137,6 +137,9 @@ type ShoppingItemRow = {
   checked: boolean;
   checked_by: string | null;
   checked_at: string | null;
+  /* 会計を済ませた時刻。買い物は週に何度も分かれるため、
+     「かごに入れた（checked）」と「買い終えた」を別に持つ（変更記録 3.16）。 */
+  purchased_at: string | null;
   sort_order: number;
 };
 

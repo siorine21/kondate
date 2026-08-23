@@ -168,6 +168,17 @@ Supabase の SQL Editor で
 [`supabase/setup/08_enable_realtime.sql`](supabase/setup/08_enable_realtime.sql)
 を実行してください。書き換える箇所はありません。
 
+### 買い物リストの「会計した」を使えるようにする
+
+`shopping_items` に列を1つ足します。既存のデータは変わりません。
+
+Supabase の SQL Editor で
+[`supabase/setup/10_purchased_at.sql`](supabase/setup/10_purchased_at.sql)
+を実行してください。書き換える箇所はありません。
+
+実行するまでは一覧とチェックは使えますが、「会計した」を押すと
+その旨の案内が出ます。
+
 ### パスワード再設定のための設定
 
 Supabase の **Authentication → URL Configuration → Redirect URLs** に
