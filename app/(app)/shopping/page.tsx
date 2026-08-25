@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { BackLink } from "@/app/(app)/back-link";
+import { guessShopCategory, normalizeUnit } from "@/lib/guess-shop";
+import type { MasterEntry } from "@/lib/guess-shop";
 import {
   SHOP_CATEGORY_LABEL,
   formatQuantity,
@@ -51,6 +53,9 @@ export default function ShoppingPage() {
   /* 売り場の開き具合。手で触るまでは「全部かごに入った売り場は畳む」に任せる。 */
   const [openState, setOpenState] = useState<Record<string, boolean>>({});
   const [adding, setAdding] = useState(false);
+  /* 売り場の見当に使う食材マスタ。「品物を足す」を開くまでは読まない。
+     普段の買い物では使わない表なので、毎回取りに行く必要がない。 */
+  const [master, setMaster] = useState<MasterEntry[]>([]);
   const userId = useRef<string>("");
 
   const load = useCallback(async () => {
@@ -272,6 +277,17 @@ export default function ShoppingPage() {
     }
   }
 
+  /* 売り場の見当に使う表。一度読めば足りるので、読み直さない。
+     読めなくても品名からの手がかりだけで見当はつくので、失敗は伝えない。 */
+  const loadMaster = useCallback(async () => {
+    if (master.length > 0) return;
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("ingredient_master")
+      .select("name, shop_category");
+    if (data) setMaster(data);
+  }, [master.length]);
+
   /* 献立に無いもの（牛乳・洗剤など）を足す。
      is_extra を立てておくと、週を組み直して確定しても消えない。 */
   async function addExtra(draft: {
@@ -300,7 +316,7 @@ export default function ShoppingPage() {
         plan_id: planId,
         name,
         total_qty: qty,
-        unit: draft.unit.trim() || null,
+        unit: normalizeUnit(draft.unit) || null,
         shop_category: draft.shopCategory,
         is_extra: true,
         sort_order:
@@ -408,6 +424,7 @@ export default function ShoppingPage() {
 
           {adding ? (
             <AddExtraForm
+              master={master}
               onCancel={() => setAdding(false)}
               onSubmit={(draft) => void addExtra(draft)}
               pending={pending}
@@ -418,6 +435,7 @@ export default function ShoppingPage() {
               onClick={() => {
                 setAdding(true);
                 setError("");
+                void loadMaster();
               }}
               type="button"
             >
@@ -638,10 +656,12 @@ function StepButton({
 /* 献立に無いものを足す欄。売り場を選べるようにして、
    買い物リストの並びに素直に入るようにする。 */
 function AddExtraForm({
+  master,
   pending,
   onSubmit,
   onCancel,
 }: {
+  master: readonly MasterEntry[];
   pending: boolean;
   onSubmit: (draft: {
     name: string;
@@ -655,6 +675,8 @@ function AddExtraForm({
   const [qty, setQty] = useState("");
   const [unit, setUnit] = useState("");
   const [shopCategory, setShopCategory] = useState<ShopCategory>("other");
+  /* 売り場を手で選んだあとは、品名を直しても勝手に動かさない。 */
+  const [pickedByHand, setPickedByHand] = useState(false);
 
   const field =
     "w-full rounded-[9px] border border-line bg-card px-3 py-2.5 text-[14px] text-ink " +
@@ -674,7 +696,11 @@ function AddExtraForm({
         <input
           className={field}
           id="extra-name"
-          onChange={(event) => setName(event.target.value)}
+          onChange={(event) => {
+            const next = event.target.value;
+            setName(next);
+            if (!pickedByHand) setShopCategory(guessShopCategory(next, master));
+          }}
           placeholder="牛乳"
           value={name}
         />
@@ -701,6 +727,7 @@ function AddExtraForm({
           <input
             className={field}
             id="extra-unit"
+            onBlur={() => setUnit(normalizeUnit(unit))}
             onChange={(event) => setUnit(event.target.value)}
             placeholder="本"
             value={unit}
@@ -717,7 +744,10 @@ function AddExtraForm({
               const picked = SHOP_CATEGORY_ORDER.find(
                 (category) => category === event.target.value,
               );
-              if (picked) setShopCategory(picked);
+              if (picked) {
+                setShopCategory(picked);
+                setPickedByHand(true);
+              }
             }}
             value={shopCategory}
           >
@@ -729,6 +759,12 @@ function AddExtraForm({
           </select>
         </div>
       </div>
+
+      <p className="mt-2 text-[11px] leading-[1.6] text-ink-3">
+        {pickedByHand
+          ? "売り場は手で選んだものを使います。"
+          : "売り場は品名から見当をつけています。違っていれば選び直してください。"}
+      </p>
 
       <div className="mt-3 flex gap-2">
         <button
