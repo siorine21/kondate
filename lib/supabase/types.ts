@@ -145,6 +145,21 @@ type ShoppingItemRow = {
   sort_order: number;
 };
 
+/* 料理のリクエスト（変更記録 3.20）。週には紐づけず、
+   献立に入るまで効き続ける。 */
+export type RequestStatus = "open" | "done";
+
+type RecipeRequestRow = {
+  id: string;
+  household_id: string;
+  recipe_id: string;
+  note: string | null;
+  status: RequestStatus;
+  requested_by: string | null;
+  created_at: string;
+  fulfilled_at: string | null;
+};
+
 type RecipeRatingRow = {
   recipe_id: string;
   user_id: string;
@@ -228,6 +243,15 @@ export type Database = {
         Update: Partial<RecipeRatingRow>;
         Relationships: [];
       };
+      recipe_requests: {
+        Row: RecipeRequestRow;
+        Insert: Writable<
+          RecipeRequestRow,
+          "household_id" | "recipe_id"
+        >;
+        Update: Partial<RecipeRequestRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -254,5 +278,6 @@ export type Database = {
 export type Recipe = RecipeRow;
 export type RecipeIngredient = RecipeIngredientRow;
 export type RecipeRating = RecipeRatingRow;
+export type RecipeRequest = RecipeRequestRow;
 export type Household = HouseholdRow;
 export type Profile = ProfileRow;

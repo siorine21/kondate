@@ -51,6 +51,10 @@ export type PlanRequest = {
   fixedSoups?: { date: string; recipeId: string | null }[];
   /* リクエストのタグ。該当するレシピを押し上げる（7.2）。 */
   tags?: string[];
+  /* リクエストされた料理。週のどこかに入るよう強く押し上げる。
+     日は決めない。fixedDays（決め打ち）とは別物で、
+     条件に合わない週なら入らないこともある（変更記録 3.20）。 */
+  requestedMainIds?: readonly string[];
 };
 
 export type PlanDay = {

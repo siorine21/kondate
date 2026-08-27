@@ -184,6 +184,17 @@ Supabase の SQL Editor で
 実行するまでは一覧とチェックは使えますが、「会計した」や「品物を足す」を
 押すとその旨の案内が出ます。
 
+### 料理のリクエストを使えるようにする
+
+`recipe_requests` の表を作ります。既存のデータは変わりません。
+
+Supabase の SQL Editor で
+[`supabase/setup/11_recipe_requests.sql`](supabase/setup/11_recipe_requests.sql)
+を実行してください。書き換える箇所はありません。何度実行しても同じです。
+
+実行するまでは、レシピ詳細で「食べたいとリクエスト」を押したときに
+その旨の案内が出ます。他の画面はそのまま使えます。
+
 ### パスワード再設定のための設定
 
 Supabase の **Authentication → URL Configuration → Redirect URLs** に

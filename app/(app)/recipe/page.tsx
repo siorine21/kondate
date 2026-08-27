@@ -15,12 +15,17 @@ import {
   scaleQuantity,
 } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/client";
-import type { Recipe, RecipeIngredient } from "@/lib/supabase/types";
+import type {
+  Recipe,
+  RecipeIngredient,
+  RecipeRequest,
+} from "@/lib/supabase/types";
 
 import {
   RecipeForm,
   type RecipeDraft,
 } from "@/app/(app)/recipes/recipe-form";
+import { RequestButton } from "@/app/(app)/recipe/request-button";
 
 import { ArchiveButton, RatingStars } from "./detail-actions";
 
@@ -39,6 +44,7 @@ export default function RecipeDetailPage() {
 
 type Loaded = {
   recipe: Recipe;
+  request: RecipeRequest | null;
   ingredients: RecipeIngredient[];
   servings: number;
   myScore: number | null;
@@ -67,12 +73,13 @@ function RecipeDetail() {
         data: { session },
       } = await supabase.auth.getSession();
 
-      /* 4 本まとめて投げる。順に待つと、そのぶん表示が遅れる。 */
+      /* まとめて投げる。順に待つと、そのぶん表示が遅れる。 */
       const [
         { data: recipe },
         { data: ingredients },
         { data: ratings },
         { data: household },
+        { data: requests },
       ] = await Promise.all([
         supabase.from("recipes").select("*").eq("id", id).maybeSingle(),
         supabase
@@ -85,6 +92,13 @@ function RecipeDetail() {
           .select("user_id, score")
           .eq("recipe_id", id),
         supabase.from("households").select("servings").maybeSingle(),
+        /* 表がまだ無いうちは失敗する。詳細そのものは出せるので、
+           ここで落とさず、リクエストの状態だけ無しとして扱う。 */
+        supabase
+          .from("recipe_requests")
+          .select("*")
+          .eq("recipe_id", id)
+          .eq("status", "open"),
       ]);
 
       if (!active) return;
@@ -99,6 +113,7 @@ function RecipeDetail() {
         servings: household?.servings ?? recipe.servings,
         myScore:
           ratings?.find((r) => r.user_id === session?.user.id)?.score ?? null,
+        request: requests?.[0] ?? null,
       });
     })();
 
@@ -122,7 +137,7 @@ function RecipeDetail() {
 
   if (!data) return <div className="min-h-dvh" />;
 
-  const { recipe, ingredients, servings, myScore } = data;
+  const { recipe, ingredients, servings, myScore, request } = data;
 
   return (
     <main className="mx-auto w-full max-w-[430px] px-5 pb-20">
@@ -228,6 +243,16 @@ function RecipeDetail() {
       <div className="mt-6">
         <RatingStars initialScore={myScore} recipeId={recipe.id} />
       </div>
+
+      {recipe.dish_type === "main" ? (
+        <div className="mt-3.5">
+          <RequestButton
+            householdId={recipe.household_id}
+            initial={request}
+            recipeId={recipe.id}
+          />
+        </div>
+      ) : null}
 
       <div className="mt-3.5 flex gap-[9px]">
         <button

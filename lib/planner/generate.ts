@@ -242,6 +242,8 @@ function assignMains(input: {
   const { weekStart, days, open, mains, settings, ratings, request, random, byId } =
     input;
 
+  const requested = new Set(request.requestedMainIds ?? []);
+
   for (const day of open) {
     const index = days.indexOf(day);
     const previous = index > 0 ? byId(days[index - 1].mainId) : null;
@@ -291,6 +293,10 @@ function assignMains(input: {
       score += (ratings[candidate.id] ?? 0) * 5;
       score += Math.min(sharedIngredients(days, byId, index, candidate), 3) * 10;
       score += requestBonus(candidate, request.tags ?? []);
+      /* リクエストされた料理を押し上げる。他のどの項目より重くしてあるが、
+         時間の上限や揚げ物の連続といったハード制約は越えない。
+         それらは上で候補から外れている（7.1）。 */
+      if (requested.has(candidate.id)) score += REQUEST_BONUS;
       score += random() * 10;
 
       if (score > bestScore) {
@@ -334,6 +340,11 @@ function sharedIngredients(
   }
   return candidate.ingredientNames.filter((name) => near.has(name)).length;
 }
+
+/* リクエストの重み。他の項目の振れ幅（たんぱく源の配分・評価・食材の使い切り・
+   ゆらぎ）を足しても届かない大きさにしてある。狙って大きくしているので、
+   数字を下げるとリクエストが効かない週が出る。 */
+const REQUEST_BONUS = 200;
 
 function requestBonus(
   candidate: PlannerRecipe,

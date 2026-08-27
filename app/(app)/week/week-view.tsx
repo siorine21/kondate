@@ -48,6 +48,7 @@ const PROTEIN_BAR: Record<string, string> = {
 export function WeekView({
   plan,
   recipes,
+  requestedIds,
   pendingDate,
   onReroll,
   onToggleLock,
@@ -58,6 +59,9 @@ export function WeekView({
 }: {
   plan: GeneratedPlan;
   recipes: readonly PlannerRecipe[];
+  /* リクエストされていて、まだ献立に入っていない主菜。
+     選び直す一覧の先頭に出す（変更記録 3.20）。 */
+  requestedIds: readonly string[];
   pendingDate: string | null;
   onReroll: (date: string) => void;
   onToggleLock: (date: string) => void;
@@ -99,6 +103,7 @@ export function WeekView({
           <DayCard
             byId={byId}
             day={day}
+            requestedIds={requestedIds}
             editing={editing === day.date}
             key={day.date}
             onSetDayState={onSetDayState}
@@ -123,6 +128,7 @@ function DayCard({
   day,
   byId,
   recipes,
+  requestedIds,
   editing,
   pending,
   onToggleEdit,
@@ -136,6 +142,7 @@ function DayCard({
   day: PlanDay;
   byId: (id: string | null) => PlannerRecipe | null;
   recipes: readonly PlannerRecipe[];
+  requestedIds: readonly string[];
   editing: boolean;
   pending: boolean;
   onToggleEdit: () => void;
@@ -231,6 +238,7 @@ function DayCard({
             onSetSide={(id) => onSetSide(day.date, id)}
             onSetSoup={(id) => onSetSoup(day.date, id)}
             recipes={recipes}
+            requestedIds={requestedIds}
           />
         ) : null}
       </div>
@@ -241,6 +249,7 @@ function DayCard({
 function DayEditor({
   day,
   recipes,
+  requestedIds,
   onSetDayState,
   onSetMain,
   onSetSide,
@@ -248,6 +257,7 @@ function DayEditor({
 }: {
   day: PlanDay;
   recipes: readonly PlannerRecipe[];
+  requestedIds: readonly string[];
   onSetDayState: (date: string, state: DayState) => void;
   onSetMain: (id: string) => void;
   onSetSide: (id: string | null) => void;
@@ -286,6 +296,7 @@ function DayEditor({
             candidates={mains}
             label="主菜を選び直す"
             onPick={(id) => id && onSetMain(id)}
+            requestedIds={requestedIds}
             selectedId={day.mainId}
           />
           <Picker
@@ -314,15 +325,25 @@ function Picker({
   candidates,
   selectedId,
   allowNone,
+  requestedIds = [],
   onPick,
 }: {
   label: string;
   candidates: readonly PlannerRecipe[];
   selectedId: string | null;
   allowNone?: boolean;
+  requestedIds?: readonly string[];
   onPick: (id: string | null) => void;
 }) {
   if (candidates.length === 0) return null;
+
+  /* リクエストされたものを先頭に持ち上げる。並べ替えるだけで、
+     元の並びは崩さない（同じ組の中では今までどおり）。 */
+  const requested = new Set(requestedIds);
+  const ordered = [
+    ...candidates.filter((recipe) => requested.has(recipe.id)),
+    ...candidates.filter((recipe) => !requested.has(recipe.id)),
+  ];
 
   return (
     <>
@@ -341,7 +362,7 @@ function Picker({
             つけない
           </button>
         ) : null}
-        {candidates.map((recipe) => (
+        {ordered.map((recipe) => (
           <button
             className={`flex min-h-[42px] w-full items-center gap-2 border-b border-line/60 px-3 text-left text-[13px] last:border-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
               recipe.id === selectedId ? "bg-ai-soft" : ""
@@ -354,6 +375,11 @@ function Picker({
               className={`h-[7px] w-[7px] flex-shrink-0 rounded-full ${PROTEIN_BAR[recipe.mainProtein]}`}
             />
             <span className="min-w-0 flex-1 truncate">{recipe.name}</span>
+            {requested.has(recipe.id) ? (
+              <span className="flex-shrink-0 rounded-[4px] bg-ai px-1.5 py-[2px] font-mono text-[9px] tracking-[0.1em] text-white">
+                リクエスト
+              </span>
+            ) : null}
             <span className="font-mono text-[10.5px] text-ink-3">
               {recipe.cookTimeMin}分
             </span>

@@ -36,6 +36,14 @@ import { Violations } from "./violations";
    組むのは lib/planner の純粋関数。この画面は入出力だけを見る。
    AI は使わない（2.2-5）。 */
 
+/* まだ献立に入っていないリクエスト。名前は表示に使う。 */
+export type OpenRequest = {
+  id: string;
+  recipeId: string;
+  requestedBy: string | null;
+  name: string;
+};
+
 type Loaded = {
   householdId: string;
   settings: PlannerSettings;
@@ -44,6 +52,10 @@ type Loaded = {
   history: MainHistory[];
   plan: GeneratedPlan | null;
   confirmed: boolean;
+  /* まだ叶っていない料理のリクエスト（変更記録 3.20）。 */
+  requests: OpenRequest[];
+  /* 誰のリクエストかを出すため。user_id → 表示名。 */
+  memberNames: Record<string, string>;
   /* 買い物リストの組み立てに使う（仕様書 9章）。 */
   sourceRecipes: SourceRecipe[];
   master: MasterEntry[];
@@ -69,6 +81,8 @@ export default function WeekPage() {
       { data: ratingRows },
       { data: masterRows },
       { data: planRow },
+      { data: requestRows },
+      { data: memberRows },
     ] = await Promise.all([
       supabase.from("households").select("*").maybeSingle(),
       supabase.from("recipes").select("*").eq("status", "active"),
@@ -82,6 +96,13 @@ export default function WeekPage() {
         .select("id, status")
         .eq("week_start", weekStart)
         .maybeSingle(),
+      /* 表がまだ無いうちは失敗する。献立そのものは組めるので、
+         ここで落とさず、リクエスト無しとして扱う。 */
+      supabase
+        .from("recipe_requests")
+        .select("id, recipe_id, requested_by")
+        .eq("status", "open"),
+      supabase.from("profiles").select("user_id, display_name"),
     ]);
 
     if (householdError || !household) {
@@ -153,6 +174,15 @@ export default function WeekPage() {
       history,
       plan,
       confirmed: planRow?.status === "confirmed",
+      requests: (requestRows ?? []).map((row) => ({
+        id: row.id,
+        recipeId: row.recipe_id,
+        requestedBy: row.requested_by,
+        name: recipes.find((recipe) => recipe.id === row.recipe_id)?.name ?? "",
+      })),
+      memberNames: Object.fromEntries(
+        (memberRows ?? []).map((row) => [row.user_id, row.display_name]),
+      ),
       sourceRecipes,
       master: (masterRows ?? []).map((row) => ({
         name: row.name,
@@ -241,6 +271,24 @@ export default function WeekPage() {
        下書きのうちは作らない。買い物中に中身が入れ替わらないようにするため。 */
     if (!confirmed) return;
 
+    /* 週に入ったリクエストは叶ったことにする。消さずに残すのは、
+       いつ何を食べたいと言ったかが分かるようにするため（変更記録 3.20）。
+       表がまだ無いうちは失敗するが、確定そのものは済んでいるので伝えない。 */
+    const granted = data.requests.filter((row) =>
+      plan.days.some(
+        (day) => day.entryType === "cook" && day.mainId === row.recipeId,
+      ),
+    );
+    if (granted.length > 0) {
+      await supabase
+        .from("recipe_requests")
+        .update({ status: "done", fulfilled_at: new Date().toISOString() })
+        .in(
+          "id",
+          granted.map((row) => row.id),
+        );
+    }
+
     const used = plan.days
       .filter((day) => day.entryType === "cook")
       .flatMap((day) => [day.mainId, day.sideId, day.soupId])
@@ -303,7 +351,17 @@ export default function WeekPage() {
 
     try {
       await persist(result.plan, confirmed);
-      setData({ ...data, plan: result.plan, confirmed });
+      /* 叶ったリクエストは画面からも下ろす。確定しても上に残り続けると、
+         まだ入っていないように見える。 */
+      const requests = confirmed
+        ? data.requests.filter(
+            (row) =>
+              !result.plan.days.some(
+                (day) => day.entryType === "cook" && day.mainId === row.recipeId,
+              ),
+          )
+        : data.requests;
+      setData({ ...data, plan: result.plan, confirmed, requests });
     } catch {
       setError("保存できませんでした。時間を置いてもう一度試してください。");
     }
@@ -360,12 +418,47 @@ export default function WeekPage() {
       settings: data.settings,
       history: data.history,
       ratings: data.ratings,
-      request,
+      request: {
+        ...request,
+        /* リクエストされた料理を押し上げる（変更記録 3.20）。
+           呼ぶ側で足すと渡し忘れる道ができるので、ここで必ず載せる。
+           決め打ちではないので、時間の上限などに合わない週には入らない。 */
+        requestedMainIds: data.requests.map((row) => row.recipeId),
+      },
       seed: Date.now() % 2147483647,
     });
   }
 
   const plan = data?.plan ?? null;
+
+  /* まだ献立に入っていないリクエストだけを押し上げる。
+     もう入っている料理を先頭に出しても、選び直す先にならない。 */
+  const openRequestIds = (data?.requests ?? [])
+    .filter(
+      (row) =>
+        !plan?.days.some(
+          (day) => day.entryType === "cook" && day.mainId === row.recipeId,
+        ),
+    )
+    .map((row) => row.recipeId);
+
+  /* リクエストを取り下げる。叶ったわけではないので行ごと消す。 */
+  async function dropRequest(id: string) {
+    if (!data) return;
+    const before = data.requests;
+    setData({ ...data, requests: before.filter((row) => row.id !== id) });
+
+    const supabase = createClient();
+    const { error: saveError } = await supabase
+      .from("recipe_requests")
+      .delete()
+      .eq("id", id);
+
+    if (saveError) {
+      setData({ ...data, requests: before });
+      setError("リクエストを取り下げられませんでした。");
+    }
+  }
 
   function moveTo(next: string) {
     if (next === weekStart) return;
@@ -471,6 +564,13 @@ export default function WeekPage() {
 
           <Violations violations={plan.violations} />
 
+          <RequestBanner
+            memberNames={data.memberNames}
+            onDrop={(id) => void dropRequest(id)}
+            plan={plan}
+            requests={data.requests}
+          />
+
           <WeekView
             onReroll={(date) => {
               setPendingDate(date);
@@ -541,6 +641,7 @@ export default function WeekPage() {
             pendingDate={pendingDate}
             plan={plan}
             recipes={data.recipes}
+            requestedIds={openRequestIds}
           />
 
           <div className="mt-5 flex gap-[9px]">
@@ -630,4 +731,72 @@ function itemsToPlan(
   }
 
   return { weekStart, days, violations: [], attempts: 0 };
+}
+
+/* リクエストの案内（変更記録 3.20）。
+
+   出ているリクエストを週の上に置く。まだ入っていないものは
+   「まだ入っていません」と書き、入ったものは日付を添える。
+   出したことを忘れないための場所なので、献立より先に目に入る位置に置く。 */
+function RequestBanner({
+  requests,
+  plan,
+  memberNames,
+  onDrop,
+}: {
+  requests: readonly OpenRequest[];
+  plan: GeneratedPlan;
+  memberNames: Record<string, string>;
+  onDrop: (id: string) => void;
+}) {
+  if (requests.length === 0) return null;
+
+  const dayOf = (recipeId: string) =>
+    plan.days.find(
+      (day) => day.entryType === "cook" && day.mainId === recipeId,
+    );
+
+  return (
+    <section className="mt-3 rounded-card border border-ai bg-ai-soft p-3.5">
+      <p className="font-mono text-[9.5px] tracking-[0.14em] text-ai">
+        リクエスト {requests.length} 件
+      </p>
+
+      <ul className="mt-2 flex flex-col gap-2">
+        {requests.map((request) => {
+          const day = dayOf(request.recipeId);
+          const who = request.requestedBy
+            ? memberNames[request.requestedBy]
+            : null;
+          return (
+            <li className="flex items-start gap-2" key={request.id}>
+              <div className="min-w-0 flex-1">
+                <p className="text-[14px] font-medium leading-[1.5] text-ink">
+                  {request.name}
+                </p>
+                <p className="mt-[2px] text-[11.5px] leading-[1.6] text-ink-2">
+                  {day
+                    ? `${formatDay(day.date).day}（${formatDay(day.date).weekday}）に入りました`
+                    : "まだ入っていません"}
+                  {who ? ` · ${who}` : ""}
+                </p>
+              </div>
+              <button
+                aria-label={`${request.name} のリクエストを取り下げる`}
+                className="min-h-[38px] flex-shrink-0 rounded-[8px] border border-line bg-card px-2.5 text-[11.5px] text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+                onClick={() => onDrop(request.id)}
+                type="button"
+              >
+                取り下げ
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      <p className="mt-2.5 text-[11px] leading-[1.6] text-ink-2">
+        確定すると、入ったリクエストは消えます。
+      </p>
+    </section>
+  );
 }
