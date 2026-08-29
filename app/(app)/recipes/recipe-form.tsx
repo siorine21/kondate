@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { GREEN_YELLOW, guessFoodGroups } from "@/lib/food-groups";
 import {
   CATEGORY_LABEL_LONG,
   DISH_TYPE_LABEL,
@@ -90,8 +91,10 @@ export function RecipeForm({
   const [cookTime, setCookTime] = useState(
     String(initial?.cook_time_min ?? 20),
   );
-  const [foodGroups, setFoodGroups] = useState<number[]>(
-    initial?.food_groups ?? [1],
+  /* 食品群は材料から自動で決める（変更記録 3.21）。
+     手で触ったあとは、材料を直しても勝手に動かさない。 */
+  const [handGroups, setHandGroups] = useState<number[] | null>(
+    initial?.food_groups ?? null,
   );
   const [ingredients, setIngredients] = useState<IngredientDraft[]>(
     initial && initial.ingredients.length > 0
@@ -105,11 +108,16 @@ export function RecipeForm({
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
 
+  const autoGroups = guessFoodGroups(
+    ingredients.map((ing) => ing.name).filter((name) => name.trim() !== ""),
+  );
+  const foodGroups = handGroups ?? autoGroups;
+
   function toggleGroup(group: number) {
-    setFoodGroups((current) =>
-      current.includes(group)
-        ? current.filter((g) => g !== group)
-        : [...current, group].sort((a, b) => a - b),
+    setHandGroups(
+      foodGroups.includes(group)
+        ? foodGroups.filter((g) => g !== group)
+        : [...foodGroups, group].sort((a, b) => a - b),
     );
   }
 
@@ -122,7 +130,7 @@ export function RecipeForm({
   function reset() {
     setName("");
     setCookTime("20");
-    setFoodGroups([1]);
+    setHandGroups(null);
     setIngredients([emptyIngredient()]);
     setSteps([""]);
     setMemo("");
@@ -299,7 +307,7 @@ export function RecipeForm({
       </div>
 
       <fieldset className="mt-4">
-        <legend className={labelClass}>食品群（該当するものすべて）</legend>
+        <legend className={labelClass}>食品群</legend>
         <div className="flex flex-wrap gap-1.5">
           {[1, 2, 3, 4, 5, 6].map((group) => (
             <button
@@ -317,6 +325,25 @@ export function RecipeForm({
             </button>
           ))}
         </div>
+
+        <p className="mt-2 text-[11px] leading-[1.6] text-ink-3">
+          {handGroups
+            ? "手で選んだものを使います。 "
+            : foodGroups.length > 0
+              ? "材料から自動で判定しています。押すと手で変えられます。"
+              : "材料を入れると自動で判定します。"}
+          {handGroups ? (
+            <button
+              className="underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+              onClick={() => setHandGroups(null)}
+              type="button"
+            >
+              自動に戻す
+            </button>
+          ) : null}
+        </p>
+
+        <GreenYellowList />
       </fieldset>
 
       <div className="mt-4">
@@ -551,4 +578,61 @@ async function update(
   }
 
   return null;
+}
+
+/* 緑黄色野菜の一覧（変更記録 3.21）。
+
+   3群かどうかは見た目では決まらない。トマトとピーマンはカロテンが
+   基準に届かないが慣例として含み、長ねぎの白い部分は含まない。
+   判定を疑ったときに引けるよう、材料を入れる場所のすぐ横に置く。
+   既定は畳んだ状態。普段は開く必要がない。 */
+function GreenYellowList() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="mt-2.5">
+      <button
+        aria-expanded={open}
+        className="flex min-h-[40px] w-full items-center gap-2 rounded-[9px] border border-line bg-card px-3 text-left text-[12px] text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+        onClick={() => setOpen((current) => !current)}
+        type="button"
+      >
+        <span className="flex-1">緑黄色野菜（3群）の一覧</span>
+        <span
+          aria-hidden
+          className={`text-[11px] text-ink-3 transition-transform ${open ? "rotate-90" : ""}`}
+        >
+          ›
+        </span>
+      </button>
+
+      {open ? (
+        <div className="mt-1.5 overflow-hidden rounded-[9px] border border-line bg-card">
+          <table className="w-full text-left text-[12px]">
+            <tbody>
+              {GREEN_YELLOW.map((row) => (
+                <tr className="border-b border-line/60 last:border-0" key={row.group}>
+                  <th
+                    className="w-[74px] border-r border-line/60 px-2.5 py-2 align-top font-mono text-[9.5px] font-normal tracking-[0.1em] text-ink-3"
+                    scope="row"
+                  >
+                    {row.group}
+                  </th>
+                  <td className="px-2.5 py-2 leading-[1.9] text-ink-2">
+                    {row.items.join("・")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="border-t border-line/60 px-2.5 py-2 text-[10.5px] leading-[1.7] text-ink-3">
+            カロテンが可食部100gあたり600µg以上のものが原則。
+            トマト・ピーマン・さやいんげんは基準に届かないが、
+            食べる量と回数が多いため慣例として含めている。
+            ねぎは青い部分だけが3群で、白い部分は4群。
+          </p>
+        </div>
+      ) : null}
+    </div>
+  );
 }
