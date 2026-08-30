@@ -206,8 +206,10 @@ function DayCard({
               {PROTEIN_LABEL[main.mainProtein]} ·{" "}
               {DISH_TYPE_LABEL[main.dishType]}
             </p>
-            <p className="mt-1.5 text-[12.5px] leading-[1.8] text-ink-2">
-              {side ? side.name : "副菜なし"} / {soup ? soup.name : "汁物なし"}
+            <p className="mt-0.5 text-[12.5px] leading-[1.6] text-ink-2">
+              <DishLink dish={side} empty="副菜なし" />
+              {" / "}
+              <DishLink dish={soup} empty="汁物なし" />
             </p>
           </>
         ) : (
@@ -316,6 +318,29 @@ function DayEditor({
         </>
       ) : null}
     </div>
+  );
+}
+
+/* 副菜・汁物の名前。主菜と同じくレシピ詳細へ飛べるようにする。
+   つけていない日は行の形を保つために文字だけ置く。 */
+function DishLink({
+  dish,
+  empty,
+}: {
+  dish: PlannerRecipe | null;
+  empty: string;
+}) {
+  if (!dish)
+    return <span className="inline-block py-1 text-ink-3">{empty}</span>;
+  /* 指で押す前提なので、行の中でも上下に余白を取る。
+     inline-block にすると、料理名の途中で折り返さない。 */
+  return (
+    <Link
+      className="inline-block py-1 underline decoration-line underline-offset-[3px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+      href={`/recipe/?id=${dish.id}`}
+    >
+      {dish.name}
+    </Link>
   );
 }
 
