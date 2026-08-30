@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { BackLink } from "@/app/(app)/back-link";
+import { carryOver } from "@/app/(app)/carry-over";
 import {
   addDays,
   formatDay,
@@ -25,6 +26,7 @@ import {
   type MasterEntry,
   type SourceRecipe,
 } from "@/lib/shopping";
+import { mergeShoppingList } from "@/lib/shopping-merge";
 import { createClient } from "@/lib/supabase/client";
 import type { DishType, EntryType } from "@/lib/supabase/types";
 
@@ -302,23 +304,56 @@ export default function WeekPage() {
       includeSeasoning: data.includeSeasoning,
     });
 
-    /* 手で足した品（is_extra）は残す。献立から作られたものだけ作り直す。
-       列がまだ無い環境では、その条件が使えないので全部作り直す。 */
-    const { error: keepError } = await supabase
-      .from("shopping_items")
-      .delete()
-      .eq("plan_id", planRow.id)
-      .eq("is_extra", false);
+    /* 前の週で買えなかったものを、先に今週へ引き継ぐ（変更記録 3.25）。
+       引き継いだ行は差分更新の対象外なので、この順でよい。 */
+    /* 列がまだ無いときは何も起きない。確定そのものは済ませる。 */
+    await carryOver(supabase, planRow.id, plan.weekStart);
 
-    if (keepError) {
-      await supabase.from("shopping_items").delete().eq("plan_id", planRow.id);
+    /* いま並んでいる行と突き合わせて、差分だけ動かす。
+       全消しして入れ直すと、かごに入れた印も会計の記録も消える。 */
+    const { data: current, error: currentError } = await supabase
+      .from("shopping_items")
+      .select("*")
+      .eq("plan_id", planRow.id);
+
+    if (currentError) throw new Error("保存できませんでした");
+
+    const merge = mergeShoppingList({
+      existing: (current ?? []).map((row) => ({
+        id: row.id,
+        name: row.name,
+        unit: row.unit,
+        totalQty: row.total_qty,
+        checked: row.checked,
+        purchasedAt: row.purchased_at ?? null,
+        isExtra: row.is_extra ?? false,
+        carriedFrom: row.carried_from ?? null,
+        qtyEdited: row.qty_edited ?? false,
+      })),
+      target: list,
+    });
+
+    if (merge.deletes.length > 0) {
+      const { error: deleteError } = await supabase
+        .from("shopping_items")
+        .delete()
+        .in("id", merge.deletes);
+      if (deleteError) throw new Error("保存できませんでした");
     }
 
-    if (list.length > 0) {
-      const { error: shoppingError } = await supabase
+    for (const update of merge.updates) {
+      const { error: updateError } = await supabase
+        .from("shopping_items")
+        .update({ total_qty: update.totalQty })
+        .eq("id", update.id);
+      if (updateError) throw new Error("保存できませんでした");
+    }
+
+    if (merge.inserts.length > 0) {
+      const { error: insertError } = await supabase
         .from("shopping_items")
         .insert(
-          list.map((item) => ({
+          merge.inserts.map((item) => ({
             plan_id: planRow.id,
             name: item.name,
             total_qty: item.totalQty,
@@ -327,7 +362,7 @@ export default function WeekPage() {
             sort_order: item.sortOrder,
           })),
         );
-      if (shoppingError) throw new Error("保存できませんでした");
+      if (insertError) throw new Error("保存できませんでした");
     }
   }
 

@@ -142,6 +142,10 @@ type ShoppingItemRow = {
   purchased_at: string | null;
   /* 手で足した品。献立から作り直しても消さない（変更記録 3.18）。 */
   is_extra: boolean;
+  /* 前の週から引き継いだ品の、元の週の週頭。null なら今週の品（3.25）。 */
+  carried_from: string | null;
+  /* 数量を手で直したしるし。確定のたびに上書きしない（3.25）。 */
+  qty_edited: boolean;
   sort_order: number;
 };
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { BackLink } from "@/app/(app)/back-link";
+import { carryOver, countCarryable } from "@/app/(app)/carry-over";
 import { guessShopCategory, normalizeUnit } from "@/lib/guess-shop";
 import type { MasterEntry } from "@/lib/guess-shop";
 import {
@@ -34,12 +35,17 @@ type Item = {
   checked_by: string | null;
   purchased_at: string | null;
   is_extra: boolean;
+  /* 前の週から引き継いだ品の、元の週の週頭（変更記録 3.25）。 */
+  carried_from: string | null;
   sort_order: number;
 };
 
 /* 列がまだ無い間に押されたときは、何をすればよいかを出す。 */
 const NEEDS_COLUMN =
   "この機能を使うには supabase/setup/10_shopping_columns.sql を実行してください。";
+
+const NEEDS_CARRY_COLUMN =
+  "この機能を使うには supabase/setup/12_shopping_carryover.sql を実行してください。";
 
 export default function ShoppingPage() {
   const [weekStart] = useState(() => weekStartOf(new Date()));
@@ -54,6 +60,8 @@ export default function ShoppingPage() {
   /* 売り場の開き具合。手で触るまでは「全部かごに入った売り場は畳む」に任せる。 */
   const [openState, setOpenState] = useState<Record<string, boolean>>({});
   const [adding, setAdding] = useState(false);
+  /* 前の週に残っている買い残しの件数（変更記録 3.25）。 */
+  const [carryable, setCarryable] = useState(0);
   /* 売り場の見当に使う食材マスタ。「品物を足す」を開くまでは読まない。
      普段の買い物では使わない表なので、毎回取りに行く必要がない。 */
   const [master, setMaster] = useState<MasterEntry[]>([]);
@@ -81,6 +89,11 @@ export default function ShoppingPage() {
       ),
     );
 
+    /* 前の週の買い残しは、今週の献立がまだ無くても知らせる。
+       ここで数えないと、確定するまで買い残しが画面から消える。 */
+    const carryable = await countCarryable(supabase, weekStart);
+    setCarryable(carryable.needsColumn ? 0 : carryable.moved);
+
     if (!plan) {
       setPlanId(null);
       setConfirmed(false);
@@ -107,8 +120,10 @@ export default function ShoppingPage() {
         ...row,
         purchased_at: row.purchased_at ?? null,
         is_extra: row.is_extra ?? false,
+        carried_from: row.carried_from ?? null,
       })),
     );
+
   }, [weekStart]);
 
   useEffect(() => {
@@ -142,6 +157,19 @@ export default function ShoppingPage() {
       void supabase.removeChannel(channel);
     };
   }, [planId, load]);
+
+  /* いつから持ち越しているか。2回以上のものは目立たせる（案C）。 */
+  function carriedLabel(from: string): string {
+    const weeks = Math.max(
+      1,
+      Math.round(
+        (Date.parse(`${weekStart}T00:00:00Z`) -
+          Date.parse(`${from}T00:00:00Z`)) /
+          (7 * 24 * 60 * 60 * 1000),
+      ),
+    );
+    return weeks <= 1 ? "前週から" : `${weeks}週前から`;
+  }
 
   function describe(message: string): string {
     return message.includes("purchased_at") || message.includes("is_extra")
@@ -205,15 +233,40 @@ export default function ShoppingPage() {
     setError("");
 
     const supabase = createClient();
+    /* 手で直したしるしを立てる。確定のたびに上書きされると、
+       「今週は多めに買う」という直しが消えてしまう（変更記録 3.25）。 */
     const { error: saveError } = await supabase
       .from("shopping_items")
-      .update({ total_qty: next })
+      .update({ total_qty: next, qty_edited: true })
       .eq("id", item.id);
 
     if (saveError) {
-      setItems(before); // 保存できていないので見た目も戻す
-      setError(describe(saveError.message));
+      /* 列がまだ無い環境では、しるし無しで数量だけ直す。 */
+      const { error: retryError } = await supabase
+        .from("shopping_items")
+        .update({ total_qty: next })
+        .eq("id", item.id);
+      if (retryError) {
+        setItems(before); // 保存できていないので見た目も戻す
+        setError(describe(retryError.message));
+      }
     }
+  }
+
+  /* 前の週の買い残しを今週へ移す。押したときだけ動かす。 */
+  async function pullCarryOver() {
+    if (!planId) return;
+    setPending(true);
+    setError("");
+    const supabase = createClient();
+    const result = await carryOver(supabase, planId, weekStart);
+    setPending(false);
+    if (result.needsColumn) {
+      setError(NEEDS_CARRY_COLUMN);
+      return;
+    }
+    setCarryable(0);
+    await load();
   }
 
   /* 会計を済ませた。かごに入れた品をまとめて畳む。
@@ -423,6 +476,38 @@ export default function ShoppingPage() {
         </section>
       ) : null}
 
+      {/* 一度の買い物で全部買えるとは限らない。前の週に残っているものを
+          知らせて、押したときだけ今週へ移す（変更記録 3.25）。 */}
+      {carryable > 0 ? (
+        <section className="mt-3 rounded-card border border-line bg-card p-3.5">
+          <p className="text-[12.5px] font-medium leading-[1.7] text-ink">
+            前の週に買えなかったものが {carryable} 件あります
+          </p>
+          <p className="mt-1 text-[11.5px] leading-[1.8] text-ink-2">
+            {planId === null
+              ? "移す先がまだありません。週間献立で「この内容で確定」を押すと、今週のリストができて一緒に引き継がれます。"
+              : "今週のリストに移すと、まとめて買いに行けます。移した品には「前週から」の印が付きます。"}
+          </p>
+          {planId === null ? (
+            <Link
+              className="mt-2.5 inline-block min-h-[40px] rounded-[9px] border border-line px-3.5 py-2.5 text-[12px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+              href="/week/"
+            >
+              週間献立をひらく
+            </Link>
+          ) : (
+            <button
+              className="mt-2.5 min-h-[40px] rounded-[9px] bg-ai px-3.5 text-[12px] font-medium text-white disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+              disabled={pending}
+              onClick={() => void pullCarryOver()}
+              type="button"
+            >
+              {pending ? "移しています" : "今週に引き継ぐ"}
+            </button>
+          )}
+        </section>
+      ) : null}
+
       {items === null ? (
         <p className="mt-6 text-[12.5px] text-ink-3">読み込んでいます</p>
       ) : items.length === 0 ? (
@@ -529,6 +614,17 @@ export default function ShoppingPage() {
                           {item.is_extra ? (
                             <span className="ml-1.5 rounded-[4px] bg-chip px-1.5 py-[1px] align-middle font-mono text-[9px] tracking-[0.08em] text-ink-3">
                               メモ
+                            </span>
+                          ) : null}
+                          {item.carried_from ? (
+                            <span
+                              className={`ml-1.5 rounded-[4px] px-1.5 py-[1px] align-middle font-mono text-[9px] tracking-[0.08em] ${
+                                carriedLabel(item.carried_from) === "前週から"
+                                  ? "bg-chip text-ink-3"
+                                  : "bg-yuzu text-white"
+                              }`}
+                            >
+                              {carriedLabel(item.carried_from)}
                             </span>
                           ) : null}
                         </span>

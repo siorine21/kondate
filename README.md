@@ -195,6 +195,22 @@ Supabase の SQL Editor で
 実行するまでは、レシピ詳細で「食べたいとリクエスト」を押したときに
 その旨の案内が出ます。他の画面はそのまま使えます。
 
+### 週2回の買い物に対応する
+
+`shopping_items` に列を2つ足します。既存のデータは変わりません。
+
+| 列 | 何のため |
+|---|---|
+| `carried_from` | 前の週で買えなかった品を今週へ引き継ぎ、いつからの持ち越しか出す |
+| `qty_edited` | 手で直した数量を、確定のたびに上書きしない |
+
+Supabase の SQL Editor で
+[`supabase/setup/12_shopping_carryover.sql`](supabase/setup/12_shopping_carryover.sql)
+を実行してください。書き換える箇所はありません。何度実行しても同じです。
+
+実行するまでは、引き継ぎが起きず、手で直した数量が確定のたびに戻ります。
+一覧とチェックはそのまま使えます。
+
 ### パスワード再設定のための設定
 
 Supabase の **Authentication → URL Configuration → Redirect URLs** に
