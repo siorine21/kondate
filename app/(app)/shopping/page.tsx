@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { BackLink } from "@/app/(app)/back-link";
@@ -397,6 +398,29 @@ export default function ShoppingPage() {
         <p className="mt-3 text-[12.5px] leading-[1.8] text-danger" role="alert">
           {error}
         </p>
+      ) : null}
+
+      {/* 買い物リストは確定を押したときの写しで、そのあと献立を変えても
+          作り直さない（買い物の途中で中身が入れ替わらないようにするため）。
+          黙って古いものを見せると、消したはずの食材が残っていることになる。
+          変わっていることだけは伝える（変更記録 3.24）。 */}
+      {items !== null && items.length > 0 && !confirmed ? (
+        <section className="mt-3 rounded-card border border-yuzu bg-card p-3.5">
+          <p className="text-[12.5px] font-medium leading-[1.7] text-ink">
+            確定したあとに献立が変わっています
+          </p>
+          <p className="mt-1 text-[11.5px] leading-[1.8] text-ink-2">
+            この一覧は、前に確定したときのものです。変えたあとの献立には
+            合っていません。週間献立で確定し直すと作り直されます。
+            かごの印と手で足した品はそのまま残ります。
+          </p>
+          <Link
+            className="mt-2.5 inline-block min-h-[38px] rounded-[9px] border border-line px-3 py-2 text-[12px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+            href="/week/"
+          >
+            週間献立をひらく
+          </Link>
+        </section>
       ) : null}
 
       {items === null ? (
