@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { GREEN_YELLOW, guessFoodGroups } from "@/lib/food-groups";
+import { guessShopCategory } from "@/lib/guess-shop";
+import type { MasterEntry } from "@/lib/guess-shop";
 import {
   CATEGORY_LABEL_LONG,
   DISH_TYPE_LABEL,
@@ -96,6 +98,17 @@ export function RecipeForm({
   const [handGroups, setHandGroups] = useState<number[] | null>(
     initial?.food_groups ?? null,
   );
+  /* 売り場を手で選んだ行。品名を直しても勝手に動かさない（変更記録 3.22）。
+     編集で開いたときは、保存されている値をそのまま使う。 */
+  const [handCategories, setHandCategories] = useState<ReadonlySet<number>>(
+    () =>
+      new Set(
+        initial ? initial.ingredients.map((_, index) => index) : [],
+      ),
+  );
+  /* 売り場の見当に使う食材マスタ。この家で実際に使う食材が載っている。
+     読めなくても品名の手がかりだけで見当はつくので、失敗は伝えない。 */
+  const [master, setMaster] = useState<MasterEntry[]>([]);
   const [ingredients, setIngredients] = useState<IngredientDraft[]>(
     initial && initial.ingredients.length > 0
       ? initial.ingredients
@@ -121,9 +134,42 @@ export function RecipeForm({
     );
   }
 
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("ingredient_master")
+        .select("name, shop_category");
+      if (active && data) setMaster(data);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   function updateIngredient(index: number, patch: Partial<IngredientDraft>) {
     setIngredients((current) =>
-      current.map((ing, i) => (i === index ? { ...ing, ...patch } : ing)),
+      current.map((ing, i) => {
+        if (i !== index) return ing;
+        const next = { ...ing, ...patch };
+        /* 品名を直したら売り場を当て直す。手で選んだ行は動かさない。 */
+        if (patch.name !== undefined && !handCategories.has(index)) {
+          next.shop_category = guessShopCategory(patch.name, master);
+        }
+        return next;
+      }),
+    );
+  }
+
+  function pickCategory(index: number, value: string) {
+    const picked = SHOP_CATEGORY_ORDER.find((category) => category === value);
+    if (!picked) return;
+    setHandCategories((current) => new Set(current).add(index));
+    setIngredients((current) =>
+      current.map((ing, i) =>
+        i === index ? { ...ing, shop_category: picked } : ing,
+      ),
     );
   }
 
@@ -132,6 +178,7 @@ export function RecipeForm({
     setCookTime("20");
     setHandGroups(null);
     setIngredients([emptyIngredient()]);
+    setHandCategories(new Set());
     setSteps([""]);
     setMemo("");
   }
@@ -375,11 +422,7 @@ export function RecipeForm({
             <select
               aria-label={`材料${index + 1}の売り場`}
               className={`${fieldClass} col-span-3`}
-              onChange={(e) =>
-                updateIngredient(index, {
-                  shop_category: e.target.value as ShopCategory,
-                })
-              }
+              onChange={(e) => pickCategory(index, e.target.value)}
               value={ing.shop_category}
             >
               {SHOP_CATEGORY_ORDER.map((sc) => (

@@ -66,7 +66,12 @@ const HINTS: readonly (readonly [string, ShopCategory])[] = [
   ["さんま", "seafood"],
   ["魚", "seafood"],
 
-  /* 調味料。「ごま油」を「ごま」より先に見る。 */
+  /* 調味料。レシピの材料にも使うので、粉類と香辛料まで入れてある。
+     小麦粉・片栗粉を乾物ではなく調味料に置くのは、買い物リストで
+     「調味料を出さない」設定（仕様書 9章）に一緒に従わせるため。
+     家にあるものを毎週リストに出しても仕方がない。 */
+  /* 「だし汁」は自分で取るもので買わない。「だしの素」より先に見る。 */
+  ["だし汁", "other"],
   ["醤油", "seasoning"],
   ["しょうゆ", "seasoning"],
   ["味噌", "seasoning"],
@@ -85,9 +90,20 @@ const HINTS: readonly (readonly [string, ShopCategory])[] = [
   ["こしょう", "seasoning"],
   ["酢", "seasoning"],
   ["だし", "seasoning"],
-  ["カレールー", "seasoning"],
+  ["カレールー", "seasoning"], ["カレー粉", "seasoning"],
+  ["酒", "seasoning"], ["ワイン", "seasoning"],
+  ["豆板醤", "seasoning"], ["甜麺醤", "seasoning"], ["コチュジャン", "seasoning"],
+  ["オイスターソース", "seasoning"], ["ナンプラー", "seasoning"],
+  ["スープの素", "seasoning"], ["コンソメ", "seasoning"], ["ブイヨン", "seasoning"],
+  ["小麦粉", "seasoning"], ["片栗粉", "seasoning"], ["パン粉", "seasoning"],
+  ["天ぷら粉", "seasoning"], ["ベーキングパウダー", "seasoning"],
+  ["ローリエ", "seasoning"], ["ナツメグ", "seasoning"], ["七味", "seasoning"],
+  ["一味", "seasoning"], ["山椒", "seasoning"], ["クミン", "seasoning"],
+  ["オレガノ", "seasoning"],
+  ["揚げ油", "seasoning"], ["米油", "seasoning"], ["なたね油", "seasoning"],
 
   /* 乾物。 */
+  /* 粉類は上の調味料で当たっているので、ここには置かない。 */
   ["わかめ", "dry"],
   ["ひじき", "dry"],
   ["昆布", "dry"],
@@ -104,9 +120,6 @@ const HINTS: readonly (readonly [string, ShopCategory])[] = [
   ["うどん", "dry"],
   ["そば", "dry"],
   ["中華麺", "dry"],
-  ["小麦粉", "dry"],
-  ["片栗粉", "dry"],
-  ["パン粉", "dry"],
   ["缶", "dry"],
 
   /* 青果。 */
@@ -133,6 +146,17 @@ const HINTS: readonly (readonly [string, ShopCategory])[] = [
   ["かぼちゃ", "produce"],
   ["にんにく", "produce"],
   ["しょうが", "produce"],
+  ["ししとう", "produce"], ["パプリカ", "produce"], ["オクラ", "produce"],
+  ["いんげん", "produce"], ["アスパラ", "produce"], ["ズッキーニ", "produce"],
+  ["セロリ", "produce"], ["ごぼう", "produce"], ["れんこん", "produce"],
+  ["さつまいも", "produce"], ["じゃがいも", "produce"], ["里芋", "produce"],
+  ["山芋", "produce"], ["長芋", "produce"], ["かぶ", "produce"],
+  ["水菜", "produce"], ["春菊", "produce"], ["チンゲン菜", "produce"],
+  ["にら", "produce"], ["三つ葉", "produce"], ["しそ", "produce"],
+  ["大葉", "produce"], ["パセリ", "produce"], ["豆苗", "produce"],
+  ["バジル", "produce"], ["クレソン", "produce"],
+  ["まいたけ", "produce"], ["エリンギ", "produce"], ["マッシュルーム", "produce"],
+  ["レモン", "produce"], ["ゆず", "produce"], ["すだち", "produce"],
   ["りんご", "produce"],
   ["バナナ", "produce"],
   ["みかん", "produce"],

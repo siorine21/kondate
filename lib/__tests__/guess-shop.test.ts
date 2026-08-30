@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import test from "node:test";
 
 import { guessShopCategory, normalizeUnit } from "../guess-shop.ts";
@@ -81,4 +83,54 @@ test("日本語の単位はそのまま残す", () => {
   assert.equal(normalizeUnit("大さじ"), "大さじ");
   assert.equal(normalizeUnit(""), "");
   assert.equal(normalizeUnit("  "), "");
+});
+
+test("シードの全材料で、売り場がシードの指定と揃う", () => {
+  /* レシピの材料は買い物リストの売り場順にそのまま効く（仕様書 9章）。
+     手で入れた 62 件を正解として突き合わせる。 */
+  const seedPath = path.join(
+    import.meta.dirname,
+    "../../supabase/setup/seed-recipes.json",
+  );
+  const parsed: unknown = JSON.parse(readFileSync(seedPath, "utf8"));
+  if (
+    typeof parsed !== "object" || parsed === null ||
+    !("recipes" in parsed) || !Array.isArray(parsed.recipes)
+  ) {
+    throw new Error("シードの形が想定と違います");
+  }
+
+  const truth = new Map<string, string>();
+  for (const recipe of parsed.recipes) {
+    for (const ing of recipe.ingredients as { name: string; shop_category: string }[]) {
+      truth.set(ing.name, ing.shop_category);
+    }
+  }
+
+  const wrong: string[] = [];
+  for (const [name, want] of truth) {
+    const got = guessShopCategory(name);
+    /* カットトマト缶だけは意図して変えている。シードは「その他」だが、
+       缶詰は乾物の棚にあるので、そちらのほうが店内で探しやすい。 */
+    if (name === "カットトマト缶") {
+      assert.equal(got, "dry");
+      continue;
+    }
+    if (got !== want) wrong.push(`${name}: ${want} のはずが ${got}`);
+  }
+  assert.deepEqual(wrong, []);
+});
+
+test("調味料に寄せてよいものと、そうでないもの", () => {
+  /* 粉類は調味料に置く。買い物リストで「調味料を出さない」設定に
+     一緒に従わせるため。家にあるものを毎週出しても仕方がない。 */
+  assert.equal(guessShopCategory("小麦粉"), "seasoning");
+  assert.equal(guessShopCategory("片栗粉"), "seasoning");
+  assert.equal(guessShopCategory("揚げ油"), "seasoning");
+  /* 生の葉物は青果。乾燥だけとは限らない。 */
+  assert.equal(guessShopCategory("バジル"), "produce");
+  assert.equal(guessShopCategory("しそ"), "produce");
+  /* だし汁は自分で取るもので買わない。だしの素は買う。 */
+  assert.equal(guessShopCategory("だし汁"), "other");
+  assert.equal(guessShopCategory("だしの素"), "seasoning");
 });
