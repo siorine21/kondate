@@ -10,6 +10,7 @@ import { AccountSection } from "./account";
 import { ArchivedSection } from "./archived";
 import { InstallSection } from "./install";
 import { PlanSection } from "./plan";
+import { RecomputeSection } from "./recompute";
 
 /* 設定（仕様書 5.2-9）。
 
@@ -110,6 +111,7 @@ export default function SettingsPage() {
           />
           <PlanSection household={data.household} onSaved={load} />
           <ArchivedSection onRestored={load} recipes={data.archived} />
+          <RecomputeSection onDone={load} />
           <InstallSection />
         </>
       )}
