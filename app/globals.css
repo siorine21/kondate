@@ -90,3 +90,25 @@ body {
   font-family: var(--font-zen), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* キーボードで操作したときに、いまどこにいるかを必ず出す（仕様書 2.1）。
+   個々の要素にも書いてあるが、書き忘れた要素にも効くよう土台を敷く。
+   :focus ではなく :focus-visible なので、指やマウスで押したときは出ない。 */
+:focus-visible {
+  outline: 2px solid var(--ai);
+  outline-offset: 2px;
+}
+
+/* 動きを減らす設定を尊重する（仕様書 2.1）。
+   目の負担や乗り物酔いを避けるための設定なので、こちらから覆さない。
+   畳む・開くといった動きは、動かずに切り替わる。 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
