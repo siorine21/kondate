@@ -27,6 +27,13 @@
   --danger: #9c4a43; /* エラー・取り消し */
   --ok: #4e7248; /* 完了・保存できた */
 
+  /* 和洋中の帯（変更記録 3.26）。主色の3段。順番は世帯の比率設定と同じ。
+     色だけで見分けさせないので、帯にはどれも品数を添える。 */
+  --mix-1: #2c4a54;
+  --mix-2: #5e7f88;
+  --mix-3: #8fa9af;
+  --mix-4: #c3d0d3;
+
   /* たんぱく源。白文字をのせるので、どれも白と 4.5:1 以上。 */
   --meat: #a85751;
   --fish: #3f7391;
@@ -54,6 +61,10 @@
   --color-chip: var(--chip);
   --color-danger: var(--danger);
   --color-ok: var(--ok);
+  --color-mix-1: var(--mix-1);
+  --color-mix-2: var(--mix-2);
+  --color-mix-3: var(--mix-3);
+  --color-mix-4: var(--mix-4);
 
   --color-meat: var(--meat);
   --color-fish: var(--fish);

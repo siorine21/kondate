@@ -5,9 +5,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import { BackLink } from "@/app/(app)/back-link";
 import { carryOver } from "@/app/(app)/carry-over";
+import { evaluateWeek, unmetTags } from "@/lib/nutrition";
 import {
   addDays,
   formatDay,
+  itemsToPlan,
   toPlannerRecipe,
   toPlannerSettings,
   weekStartOf,
@@ -58,6 +60,8 @@ type Loaded = {
   requests: OpenRequest[];
   /* 誰のリクエストかを出すため。user_id → 表示名。 */
   memberNames: Record<string, string>;
+  /* 前の週で届かなかった目標。次に組むとき優先する（仕様書 10章 / 変更記録 3.26）。 */
+  carryTags: string[];
   /* 買い物リストの組み立てに使う（仕様書 9章）。 */
   sourceRecipes: SourceRecipe[];
   master: MasterEntry[];
@@ -85,6 +89,7 @@ export default function WeekPage() {
       { data: planRow },
       { data: requestRows },
       { data: memberRows },
+      { data: lastPlan },
     ] = await Promise.all([
       supabase.from("households").select("*").maybeSingle(),
       supabase.from("recipes").select("*").eq("status", "active"),
@@ -105,6 +110,11 @@ export default function WeekPage() {
         .select("id, recipe_id, requested_by")
         .eq("status", "open"),
       supabase.from("profiles").select("user_id, display_name"),
+      supabase
+        .from("meal_plans")
+        .select("id")
+        .eq("week_start", addDays(weekStart, -7))
+        .maybeSingle(),
     ]);
 
     if (householdError || !household) {
@@ -157,6 +167,21 @@ export default function WeekPage() {
       )
       .map((row) => ({ recipeId: row.recipe_id, date: row.date }));
 
+    /* 前の週で届かなかった目標を、次に組むときの手がかりにする
+       （仕様書 10章）。前の週の献立が無ければ何も渡さない。 */
+    let carryTags: string[] = [];
+    if (lastPlan) {
+      const { data: lastItems } = await supabase
+        .from("meal_plan_items")
+        .select("date, slot, recipe_id, entry_type, locked")
+        .eq("plan_id", lastPlan.id)
+        .order("date");
+      const lastWeek = itemsToPlan(addDays(weekStart, -7), lastItems ?? []);
+      const byId = (id: string | null) =>
+        recipes.find((recipe) => recipe.id === id) ?? null;
+      carryTags = unmetTags(evaluateWeek({ days: lastWeek.days, byId }));
+    }
+
     let plan: GeneratedPlan | null = null;
     if (planRow) {
       const { data: items } = await supabase
@@ -182,6 +207,7 @@ export default function WeekPage() {
         requestedBy: row.requested_by,
         name: recipes.find((recipe) => recipe.id === row.recipe_id)?.name ?? "",
       })),
+      carryTags,
       memberNames: Object.fromEntries(
         (memberRows ?? []).map((row) => [row.user_id, row.display_name]),
       ),
@@ -459,6 +485,8 @@ export default function WeekPage() {
            呼ぶ側で足すと渡し忘れる道ができるので、ここで必ず載せる。
            決め打ちではないので、時間の上限などに合わない週には入らない。 */
         requestedMainIds: data.requests.map((row) => row.recipeId),
+        /* 前の週で届かなかった目標も押し上げる（仕様書 10章）。 */
+        tags: [...(request?.tags ?? []), ...data.carryTags],
       },
       seed: Date.now() % 2147483647,
     });
@@ -590,6 +618,12 @@ export default function WeekPage() {
               </p>
               <Link
                 className="ml-auto min-h-[38px] rounded-[9px] border border-line px-3 py-2 text-[12px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+                href="/nutrition/"
+              >
+                栄養サマリ
+              </Link>
+              <Link
+                className="min-h-[38px] rounded-[9px] border border-line px-3 py-2 text-[12px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                 href="/shopping/"
               >
                 買い物リスト
@@ -732,42 +766,6 @@ function WeekButton({
 }
 
 /* DB の行から画面の形へ。1日3行（主菜・副菜・汁物）で持っている。 */
-function itemsToPlan(
-  weekStart: string,
-  items: readonly {
-    date: string;
-    slot: string;
-    recipe_id: string | null;
-    entry_type: EntryType;
-    locked: boolean;
-  }[],
-): GeneratedPlan {
-  const days: PlanDay[] = Array.from({ length: 7 }, (_, i) => ({
-    date: addDays(weekStart, i),
-    entryType: "cook",
-    /* 行が1つも無い日は「まだ決めていない」。
-       生成した日は必ず主菜の行を持つので、これで見分けられる。 */
-    undecided: true,
-    locked: false,
-    mainId: null,
-    sideId: null,
-    soupId: null,
-  }));
-
-  for (const item of items) {
-    const day = days.find((d) => d.date === item.date);
-    if (!day) continue;
-    day.entryType = item.entry_type;
-    day.undecided = false;
-    day.locked = day.locked || item.locked;
-    if (item.slot === "main") day.mainId = item.recipe_id;
-    if (item.slot === "side") day.sideId = item.recipe_id;
-    if (item.slot === "soup") day.soupId = item.recipe_id;
-  }
-
-  return { weekStart, days, violations: [], attempts: 0 };
-}
-
 /* リクエストの案内（変更記録 3.20）。
 
    出ているリクエストを週の上に置く。まだ入っていないものは

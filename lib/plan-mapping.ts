@@ -1,5 +1,10 @@
-import type { PlannerRecipe, PlannerSettings } from "@/lib/planner";
-import type { Household, Recipe } from "@/lib/supabase/types";
+import type {
+  GeneratedPlan,
+  PlanDay,
+  PlannerRecipe,
+  PlannerSettings,
+} from "@/lib/planner";
+import type { EntryType, Household, Recipe } from "@/lib/supabase/types";
 
 /* DB の行を、献立生成が受け取る形に直す。
    planner 側に Supabase の型を持ち込まないための境界（仕様書 2.3）。 */
@@ -53,4 +58,42 @@ export function formatDay(date: string): { day: string; weekday: string } {
     day: `${parsed.getUTCMonth() + 1}/${parsed.getUTCDate()}`,
     weekday: WEEKDAY_LABEL[parsed.getUTCDay()],
   };
+}
+
+/* 保存された行から週の献立を組み立て直す。
+   週間献立と栄養サマリの両方が読むので、ここに1つだけ置く（変更記録 3.26）。 */
+export function itemsToPlan(
+  weekStart: string,
+  items: readonly {
+    date: string;
+    slot: string;
+    recipe_id: string | null;
+    entry_type: EntryType;
+    locked: boolean;
+  }[],
+): GeneratedPlan {
+  const days: PlanDay[] = Array.from({ length: 7 }, (_, i) => ({
+    date: addDays(weekStart, i),
+    entryType: "cook",
+    /* 行が1つも無い日は「まだ決めていない」。
+       生成した日は必ず主菜の行を持つので、これで見分けられる。 */
+    undecided: true,
+    locked: false,
+    mainId: null,
+    sideId: null,
+    soupId: null,
+  }));
+
+  for (const item of items) {
+    const day = days.find((d) => d.date === item.date);
+    if (!day) continue;
+    day.entryType = item.entry_type;
+    day.undecided = false;
+    day.locked = day.locked || item.locked;
+    if (item.slot === "main") day.mainId = item.recipe_id;
+    if (item.slot === "side") day.sideId = item.recipe_id;
+    if (item.slot === "soup") day.soupId = item.recipe_id;
+  }
+
+  return { weekStart, days, violations: [], attempts: 0 };
 }

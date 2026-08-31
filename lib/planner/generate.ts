@@ -353,9 +353,12 @@ function requestBonus(
   if (tags.length === 0) return 0;
   let bonus = 0;
   for (const tag of tags) {
-    if (tag === "魚" && candidate.mainProtein === "fish") bonus += 15;
-    if (tag === "大豆" && candidate.mainProtein === "soy") bonus += 15;
+    if (tag === "魚" && candidate.mainProtein === "fish") bonus += 20;
+    if (tag === "大豆" && candidate.mainProtein === "soy") bonus += 20;
     if (tag === "揚げ物なし" && candidate.method === "fry") bonus -= 40;
+    /* 前の週で届かなかった食品群を押し上げる（仕様書 10章）。 */
+    if (tag === "緑黄色野菜" && candidate.foodGroups.includes(3)) bonus += 20;
+    if (tag === "乳製品" && candidate.foodGroups.includes(2)) bonus += 20;
     if (candidate.tags.includes(tag)) bonus += 15;
   }
   return bonus;

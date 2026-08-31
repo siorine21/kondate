@@ -35,6 +35,12 @@ export default function TodayPage() {
         >
           レシピを見る
         </Link>
+        <Link
+          className="mt-2.5 flex min-h-[48px] w-full max-w-[280px] items-center justify-center rounded-[11px] border border-line text-[13.5px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+          href="/nutrition/"
+        >
+          栄養サマリを見る
+        </Link>
       </div>
     </main>
   );
