@@ -25,6 +25,7 @@ import {
   RecipeForm,
   type RecipeDraft,
 } from "@/app/(app)/recipes/recipe-form";
+import { Heart } from "@/app/(app)/heart";
 import { RequestButton } from "@/app/(app)/recipe/request-button";
 
 import { ArchiveButton, RatingStars } from "./detail-actions";
@@ -45,6 +46,8 @@ export default function RecipeDetailPage() {
 type Loaded = {
   recipe: Recipe;
   request: RecipeRequest | null;
+  /* この料理がこれまでにもらったハートの数（変更記録 3.29）。 */
+  hearts: number;
   ingredients: RecipeIngredient[];
   servings: number;
   myScore: number | null;
@@ -80,6 +83,7 @@ function RecipeDetail() {
         { data: ratings },
         { data: household },
         { data: requests },
+        { data: hearts },
       ] = await Promise.all([
         supabase.from("recipes").select("*").eq("id", id).maybeSingle(),
         supabase
@@ -99,6 +103,9 @@ function RecipeDetail() {
           .select("*")
           .eq("recipe_id", id)
           .eq("status", "open"),
+        /* 表がまだ無いうちは失敗する。詳細そのものは出せるので、
+           ここで落とさず、0件として扱う。 */
+        supabase.from("meal_thanks").select("id").eq("recipe_id", id),
       ]);
 
       if (!active) return;
@@ -114,6 +121,7 @@ function RecipeDetail() {
         myScore:
           ratings?.find((r) => r.user_id === session?.user.id)?.score ?? null,
         request: requests?.[0] ?? null,
+        hearts: (hearts ?? []).length,
       });
     })();
 
@@ -137,7 +145,7 @@ function RecipeDetail() {
 
   if (!data) return <div className="min-h-dvh" />;
 
-  const { recipe, ingredients, servings, myScore, request } = data;
+  const { recipe, ingredients, servings, myScore, request, hearts } = data;
 
   return (
     <main className="mx-auto w-full max-w-[430px] px-5 pb-20">
@@ -238,6 +246,13 @@ function RecipeDetail() {
             {recipe.memo}
           </p>
         </>
+      ) : null}
+
+      {hearts > 0 ? (
+        <p className="mt-5 flex items-center gap-2 text-[12.5px] text-ink-2">
+          <Heart filled />
+          この料理は、これまでに {hearts} 回ハートをもらっています
+        </p>
       ) : null}
 
       <div className="mt-6">

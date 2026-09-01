@@ -211,6 +211,17 @@ Supabase の SQL Editor で
 実行するまでは、引き継ぎが起きず、手で直した数量が確定のたびに戻ります。
 一覧とチェックはそのまま使えます。
 
+### 今日のごはんにハートを贈れるようにする
+
+`meal_thanks` の表を作ります。既存のデータは変わりません。
+
+Supabase の SQL Editor で
+[`supabase/setup/13_meal_thanks.sql`](supabase/setup/13_meal_thanks.sql)
+を実行してください。書き換える箇所はありません。何度実行しても同じです。
+
+実行するまでは、ハートを贈ろうとしたときにその旨の案内が出ます。
+他の画面はそのまま使えます。
+
 ### パスワード再設定のための設定
 
 Supabase の **Authentication → URL Configuration → Redirect URLs** に

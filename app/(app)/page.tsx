@@ -7,8 +7,10 @@ import { PROTEIN_BG, PROTEIN_LABEL } from "@/lib/labels";
 import { addDays, formatDay, itemsToPlan, toPlannerRecipe, weekStartOf } from "@/lib/plan-mapping";
 import type { PlanDay, PlannerRecipe } from "@/lib/planner";
 import { createClient } from "@/lib/supabase/client";
+import type { MealThanks } from "@/lib/supabase/types";
 import { findDay, prepNote, todayIso } from "@/lib/today";
 
+import { HeartButton } from "./heart";
 import { SettingsLink } from "./settings-link";
 
 /* 今日の献立（仕様書 5.2-2 / Phase 7）。
@@ -23,6 +25,11 @@ type Loaded = {
   memos: Record<string, string | null>;
   remaining: number;
   hasPlan: boolean;
+  /* 今日のごはんへのハート（変更記録 3.29）。 */
+  householdId: string;
+  userId: string;
+  thanks: MealThanks[];
+  names: Record<string, string>;
 };
 
 const STATE_TEXT: Record<string, string> = {
@@ -39,9 +46,18 @@ export default function TodayPage() {
   const load = useCallback(async () => {
     const supabase = createClient();
     const weekStart = weekStartOf(new Date());
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    const [{ data: plan }, { data: recipeRows }, { data: ingredientRows }] =
-      await Promise.all([
+    const [
+      { data: plan },
+      { data: recipeRows },
+      { data: ingredientRows },
+      { data: household },
+      { data: profiles },
+      { data: thanksRows },
+    ] = await Promise.all([
         supabase
           .from("meal_plans")
           .select("id, status")
@@ -49,6 +65,11 @@ export default function TodayPage() {
           .maybeSingle(),
         supabase.from("recipes").select("*"),
         supabase.from("recipe_ingredients").select("recipe_id, name"),
+        supabase.from("households").select("id").maybeSingle(),
+        supabase.from("profiles").select("user_id, display_name"),
+        /* 表がまだ無いうちは失敗する。今日の献立そのものは出せるので、
+           ここで落とさず、ハート無しとして扱う。 */
+        supabase.from("meal_thanks").select("*").eq("date", date),
       ]);
 
     const names = new Map<string, string[]>();
@@ -65,12 +86,22 @@ export default function TodayPage() {
 
     /* 確定していない週は「まだ決まっていない」として扱う（仕様書 5.2-2）。
        下書きを今日の献立として出すと、変わる前提のものを確定と見せてしまう。 */
+    const shared = {
+      byId,
+      memos,
+      householdId: household?.id ?? "",
+      userId: session?.user.id ?? "",
+      thanks: thanksRows ?? [],
+      names: Object.fromEntries(
+        (profiles ?? []).map((row) => [row.user_id, row.display_name]),
+      ),
+    };
+
     if (!plan || plan.status !== "confirmed") {
       setData({
+        ...shared,
         today: null,
         tomorrow: null,
-        byId,
-        memos,
         remaining: 0,
         hasPlan: false,
       });
@@ -92,10 +123,9 @@ export default function TodayPage() {
 
     const built = itemsToPlan(weekStart, items ?? []);
     setData({
+      ...shared,
       today: findDay(built.days, date),
       tomorrow: findDay(built.days, addDays(date, 1)),
-      byId,
-      memos,
       remaining: (shopping ?? []).length,
       hasPlan: true,
     });
@@ -146,6 +176,28 @@ export default function TodayPage() {
       ) : (
         <>
           <TodayCard byId={data.byId} day={data.today} />
+
+          {/* 作ってくれた人へのハート。作った日にだけ意味があるので、
+              自炊した日にだけ出す（変更記録 3.29）。 */}
+          {data.today &&
+          !data.today.undecided &&
+          data.today.entryType === "cook" &&
+          data.today.mainId &&
+          data.householdId ? (
+            <HeartButton
+              date={date}
+              householdId={data.householdId}
+              mine={
+                data.thanks.find((row) => row.created_by === data.userId) ?? null
+              }
+              names={data.names}
+              onChanged={() => void load()}
+              received={data.thanks.filter(
+                (row) => row.created_by !== data.userId,
+              )}
+              recipeId={data.today.mainId}
+            />
+          ) : null}
 
           {data.remaining > 0 ? (
             <Link

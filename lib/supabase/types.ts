@@ -164,6 +164,18 @@ type RecipeRequestRow = {
   fulfilled_at: string | null;
 };
 
+/* 今日のごはんへのハート（変更記録 3.29）。
+   ★評価（recipe_ratings）とは別物で、献立の選ばれやすさには効かない。 */
+type MealThanksRow = {
+  id: string;
+  household_id: string;
+  date: string;
+  recipe_id: string | null;
+  note: string | null;
+  created_by: string;
+  created_at: string;
+};
+
 type RecipeRatingRow = {
   recipe_id: string;
   user_id: string;
@@ -247,6 +259,12 @@ export type Database = {
         Update: Partial<RecipeRatingRow>;
         Relationships: [];
       };
+      meal_thanks: {
+        Row: MealThanksRow;
+        Insert: Writable<MealThanksRow, "household_id" | "date" | "created_by">;
+        Update: Partial<MealThanksRow>;
+        Relationships: [];
+      };
       recipe_requests: {
         Row: RecipeRequestRow;
         Insert: Writable<
@@ -283,5 +301,6 @@ export type Recipe = RecipeRow;
 export type RecipeIngredient = RecipeIngredientRow;
 export type RecipeRating = RecipeRatingRow;
 export type RecipeRequest = RecipeRequestRow;
+export type MealThanks = MealThanksRow;
 export type Household = HouseholdRow;
 export type Profile = ProfileRow;
