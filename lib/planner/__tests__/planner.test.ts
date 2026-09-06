@@ -358,3 +358,46 @@ test("制約の検査そのものが働いている（わざと壊して確か�
     "同カテゴリの3日連続を見逃した",
   );
 });
+
+test("主役が別でも、含まれていれば魚・大豆として数える（変更記録 3.34）", () => {
+  /* 「肉豆腐」のように、主役は肉でも豆腐が入る料理がある。
+     いまのシードには無いので、作って確かめる。 */
+  const nikudofu: PlannerRecipe = {
+    id: "nikudofu",
+    name: "肉豆腐",
+    category: "washoku",
+    dishType: "main",
+    mainProtein: "meat",
+    method: "simmer",
+    cookTimeMin: 25,
+    foodGroups: [1, 4],
+    tags: [],
+    ingredientNames: ["牛こま切れ肉", "木綿豆腐", "長ねぎ", "醤油", "砂糖"],
+    meatKind: "beef",
+    proteinSources: ["meat", "soy"],
+  };
+
+  const days: PlanDay[] = [
+    {
+      date: "2026-08-23",
+      entryType: "cook",
+      undecided: false,
+      locked: false,
+      mainId: nikudofu.id,
+      sideId: null,
+      soupId: null,
+    },
+  ];
+
+  const violations = validateWeek({
+    weekStart: SUNDAY,
+    days,
+    byId: (id) => (id === nikudofu.id ? nikudofu : null),
+    settings: defaultSettings,
+    history: [],
+  });
+
+  const soy = violations.find((v) => v.kind === "soy_shortage");
+  if (soy?.kind !== "soy_shortage") throw new Error("大豆の不足が出ていない");
+  assert.equal(soy.actual, 1, "主役は肉だが、豆腐が入っているので大豆1日と数える");
+});

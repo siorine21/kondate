@@ -5,6 +5,7 @@ import type {
   PlannerSettings,
 } from "@/lib/planner";
 import { meatKindOf } from "@/lib/meat";
+import { proteinSourcesOf } from "@/lib/protein";
 import type { EntryType, Household, Recipe } from "@/lib/supabase/types";
 
 /* DB の行を、献立生成が受け取る形に直す。
@@ -27,6 +28,8 @@ export function toPlannerRecipe(
     ingredientNames: [...ingredientNames],
     /* 肉の種類は列を持たず、材料名から出す（変更記録 3.33）。 */
     meatKind: meatKindOf(ingredientNames),
+    /* 含まれるたんぱく源も材料名から出す（変更記録 3.34）。 */
+    proteinSources: proteinSourcesOf(ingredientNames),
   };
 }
 

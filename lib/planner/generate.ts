@@ -434,8 +434,8 @@ function requestBonus(
   if (tags.length === 0) return 0;
   let bonus = 0;
   for (const tag of tags) {
-    if (tag === "魚" && candidate.mainProtein === "fish") bonus += 20;
-    if (tag === "大豆" && candidate.mainProtein === "soy") bonus += 20;
+    if (tag === "魚" && candidate.proteinSources.includes("fish")) bonus += 20;
+    if (tag === "大豆" && candidate.proteinSources.includes("soy")) bonus += 20;
     if (tag === "揚げ物なし" && candidate.method === "fry") bonus -= 40;
     /* 前の週で届かなかった食品群を押し上げる（仕様書 10章）。 */
     if (tag === "緑黄色野菜" && candidate.foodGroups.includes(3)) bonus += 20;
@@ -514,12 +514,14 @@ function fillSoyWithSides(input: {
 }) {
   const { days, sides, soups, byId, pinnedSides } = input;
 
-  const soySides = sides.filter((recipe) => recipe.mainProtein === "soy");
+  const soySides = sides.filter((recipe) =>
+    recipe.proteinSources.includes("soy"),
+  );
   if (soySides.length === 0) return;
 
   const hasSoy = (day: PlanDay) =>
     [byId(day.mainId), byId(day.sideId)].some(
-      (recipe) => recipe?.mainProtein === "soy",
+      (recipe) => recipe?.proteinSources.includes("soy") ?? false,
     );
 
   const cookDays = days.filter(

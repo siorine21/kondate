@@ -25,6 +25,10 @@ export type PlannerRecipe = {
   /* 肉の種類（鶏・豚・牛など）。材料名から出す。肉が無ければ null。
      同じ肉が続かないようにするために見る（変更記録 3.33）。 */
   meatKind: MeatKind | null;
+  /* 実際に含まれるたんぱく源。mainProtein が「主役はどれか」なのに対し、
+     こちらは「何が入っているか」。材料名から出す（変更記録 3.34）。
+     魚週2回・大豆週2回の判定はこちらで数える。 */
+  proteinSources: MainProtein[];
 };
 
 export type PlannerSettings = {

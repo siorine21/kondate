@@ -63,11 +63,12 @@ export function evaluateWeek(input: {
   }
 
   const fish = cook.filter(
-    (day) => byId(day.mainId)?.mainProtein === "fish",
+    /* 主役が魚でなくても、魚が入っていれば数える（変更記録 3.34）。 */
+    (day) => byId(day.mainId)?.proteinSources.includes("fish") ?? false,
   ).length;
 
   const soy = dayCount((dishes) =>
-    dishes.some((dish) => dish.mainProtein === "soy"),
+    dishes.some((dish) => dish.proteinSources.includes("soy")),
   );
 
   /* 揚げ物が2日続いていないか。7.1 のハード制約と同じ見方をする。 */

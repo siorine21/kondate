@@ -79,7 +79,8 @@ export function validateWeek(input: {
 
   /* 魚を主菜で週2回以上 */
   const fish = cookDays.filter(
-    (day) => mainOf(day)?.mainProtein === "fish",
+    /* 主役が魚でなくても、魚が入っていれば数える（変更記録 3.34）。 */
+    (day) => mainOf(day)?.proteinSources.includes("fish") ?? false,
   ).length;
   if (fish < 2) {
     violations.push({ kind: "fish_shortage", actual: fish, target: 2 });
@@ -88,7 +89,9 @@ export function validateWeek(input: {
   /* 大豆製品を主菜または副菜で週2回以上 */
   const soy = cookDays.filter((day) =>
     [byId(day.mainId), byId(day.sideId)].some(
-      (recipe) => recipe?.mainProtein === "soy",
+      /* 「厚揚げと豚肉の味噌炒め」のように主役が別でも、
+         大豆が入っていれば数える（変更記録 3.34）。 */
+      (recipe) => recipe?.proteinSources.includes("soy") ?? false,
     ),
   ).length;
   if (soy < 2) {

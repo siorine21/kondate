@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { meatKindOf } from "../../meat.ts";
+import { proteinSourcesOf } from "../../protein.ts";
 import type { PlannerRecipe, PlannerSettings } from "../types.ts";
 
 /* 実際のシード20件をそのまま使う（仕様書 11.1）。
@@ -51,6 +52,7 @@ export function seedRecipes(): PlannerRecipe[] {
     tags: recipe.tags,
     ingredientNames: recipe.ingredients.map((ing) => ing.name),
     meatKind: meatKindOf(recipe.ingredients.map((ing) => ing.name)),
+    proteinSources: proteinSourcesOf(recipe.ingredients.map((ing) => ing.name)),
   }));
 }
 

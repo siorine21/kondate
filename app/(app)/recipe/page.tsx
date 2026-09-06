@@ -27,6 +27,7 @@ import {
 } from "@/app/(app)/recipes/recipe-form";
 import { Heart } from "@/app/(app)/heart";
 import { RequestButton } from "@/app/(app)/recipe/request-button";
+import { proteinSourcesOf } from "@/lib/protein";
 
 import { ArchiveButton, RatingStars } from "./detail-actions";
 
@@ -147,6 +148,11 @@ function RecipeDetail() {
 
   const { recipe, ingredients, servings, myScore, request, hearts } = data;
 
+  /* 材料に入っている、主役以外のたんぱく源（変更記録 3.34）。 */
+  const others = proteinSourcesOf(ingredients.map((ing) => ing.name)).filter(
+    (key) => key !== recipe.main_protein,
+  );
+
   return (
     <main className="mx-auto w-full max-w-[430px] px-5 pb-20">
       <BackLink href="/recipes/">レシピ</BackLink>
@@ -169,16 +175,31 @@ function RecipeDetail() {
           ))}
         </div>
 
-        {recipe.main_protein !== "none" ? (
+        {recipe.main_protein !== "none" || others.length > 0 ? (
           /* 食品群の名前は長い。横に並べると折り返して読めなくなるため、
              たんぱく源の下に置く。 */
           <div className="mt-[13px]">
             <div className="flex items-center gap-2">
               <span
-                className={`inline-block h-[7px] w-[7px] rounded-full ${PROTEIN_BG[recipe.main_protein]}`}
+                className={`inline-block h-[7px] w-[7px] rounded-full ${
+                  PROTEIN_BG[
+                    recipe.main_protein === "none" && others[0]
+                      ? others[0]
+                      : recipe.main_protein
+                  ]
+                }`}
               />
               <span className="text-[11px] text-ink-3">
-                たんぱく源：{PROTEIN_LABEL[recipe.main_protein]}
+                {/* 主役のほかに入っているものも出す。魚週2回・大豆週2回は
+                    こちらも数える（変更記録 3.34）。
+                    主役が「なし」のときは、入っているものをそのまま書く。 */}
+                {recipe.main_protein === "none"
+                  ? `たんぱく源：${others.map((key) => PROTEIN_LABEL[key]).join("・")}`
+                  : `たんぱく源：${PROTEIN_LABEL[recipe.main_protein]}${
+                      others.length > 0
+                        ? `（${others.map((key) => PROTEIN_LABEL[key]).join("・")}も使います）`
+                        : ""
+                    }`}
               </span>
             </div>
             <p className="mt-1.5 text-[10.5px] leading-[1.75] text-ink-3">
