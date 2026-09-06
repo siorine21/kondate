@@ -1,7 +1,14 @@
+import { CATEGORY_LABEL } from "@/lib/labels";
 import type { Violation } from "@/lib/planner";
 
 /* 10回組み直しても満たせなかった制約を隠さずに出す（仕様書 7.1）。
    黙って緩めると、栄養の偏りに気づけない。 */
+
+/* 和洋中の名前。想定外の値が来ても、そのまま出して落とさない。 */
+function categoryLabel(category: string): string {
+  const known = Object.keys(CATEGORY_LABEL).find((key) => key === category);
+  return known ? CATEGORY_LABEL[known as keyof typeof CATEGORY_LABEL] : category;
+}
 
 function describe(violation: Violation): string {
   switch (violation.kind) {
@@ -21,6 +28,12 @@ function describe(violation: Violation): string {
       return "アレルギーの食材が入っています";
     case "cook_time_over":
       return `調理時間が上限（${violation.limit}分）を超える日があります`;
+    case "category_short":
+      return (
+        `${categoryLabel(violation.category)}の主菜が${violation.have}件では、` +
+        `設定した比率どおりの週${violation.want}回にできません。` +
+        `あと${violation.want - violation.have}件登録すると届きます`
+      );
     case "repeat_gap_relaxed":
       return (
         `同じ主菜を空ける日数を${violation.from}日から${violation.to}日に縮めました。` +

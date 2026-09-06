@@ -78,6 +78,8 @@ export const defaultSettings: PlannerSettings = {
   repeatGapDays: 14,
   weekdayMaxMinutes: 30,
   weekendMaxMinutes: null,
+  /* 仕様書 3.1 の既定 和4・洋1・中2。 */
+  categoryRatio: { washoku: 4, yoshoku: 1, chuka: 2 },
 };
 
 export const SUNDAY = "2026-08-23"; // 日曜（週の起点。変更記録 3.10）

@@ -34,6 +34,11 @@ export function toPlannerSettings(household: Household): PlannerSettings {
     repeatGapDays: household.repeat_gap_days,
     weekdayMaxMinutes: household.weekday_max_minutes,
     weekendMaxMinutes: household.weekend_max_minutes,
+    categoryRatio: {
+      washoku: household.ratio_washoku,
+      yoshoku: household.ratio_yoshoku,
+      chuka: household.ratio_chuka,
+    },
   };
 }
 

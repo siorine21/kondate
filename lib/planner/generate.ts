@@ -28,6 +28,29 @@ const PROTEIN_TARGET: Readonly<Record<string, number>> = {
   soy: 1,
 };
 
+/* 和洋中の目安を、比率から1週間ぶんの品数に直す（変更記録 3.32）。
+   合計が0なら目安を持たない。「その他」は比率を持たないので数えない。 */
+function categoryTarget(
+  ratio: PlannerSettings["categoryRatio"],
+): Readonly<Record<string, number>> {
+  const total = ratio.washoku + ratio.yoshoku + ratio.chuka;
+  if (total <= 0) return {};
+  return {
+    washoku: (ratio.washoku / total) * 7,
+    yoshoku: (ratio.yoshoku / total) * 7,
+    chuka: (ratio.chuka / total) * 7,
+  };
+}
+
+/* 和洋中の重み。たんぱく源（+30〜45）より上限を低くしてある。
+   たんぱく源は 7.1 のハード制約に直結しているが、和洋中は好みなので、
+   競り合ったときはたんぱく源を優先させる。
+
+   12 から 60 まで振って測ったところ、30 を超えると寄りがほとんど改善せず、
+   在庫の少ないカテゴリは頭打ちになる。天井は重みではなくレシピの数。 */
+const CATEGORY_BONUS = 30;
+const CATEGORY_PENALTY = -25;
+
 /* 主菜がこれを下回ると週を組めない（7.2-2）。 */
 const MIN_MAIN_POOL = 10;
 
@@ -145,6 +168,18 @@ export function generateWeek(input: {
     mains = poolWithGap(effectiveGap);
   }
 
+  /* 比率どおりに出そうにも、そのカテゴリのレシピが足りないことがある。
+     週に5回出すには5件要る（同じ週に同じ主菜は使えないため）。
+     黙って比率を無視するより、届かないことを伝える（変更記録 3.32）。 */
+  const short: Violation[] = [];
+  for (const [category, target] of Object.entries(
+    categoryTarget(settings.categoryRatio),
+  )) {
+    const want = Math.round(target);
+    const have = allMains.filter((recipe) => recipe.category === category).length;
+    if (want > have) short.push({ kind: "category_short", category, have, want });
+  }
+
   const relaxed: Violation[] =
     effectiveGap === settings.repeatGapDays
       ? []
@@ -217,7 +252,12 @@ export function generateWeek(input: {
 
   return {
     ok: true,
-    plan: { weekStart, days, violations: [...relaxed, ...violations], attempts },
+    plan: {
+      weekStart,
+      days,
+      violations: [...relaxed, ...short, ...violations],
+      attempts,
+    },
   };
 }
 
@@ -247,6 +287,7 @@ function assignMains(input: {
     input;
 
   const requested = new Set(request.requestedMainIds ?? []);
+  const categoryGoal = categoryTarget(settings.categoryRatio);
 
   for (const day of open) {
     const index = days.indexOf(day);
@@ -270,6 +311,7 @@ function assignMains(input: {
     );
 
     const placed = countProteins(days, byId, day);
+    const placedCategory = countCategories(days, byId, day);
 
     let best: PlannerRecipe | null = null;
     let bestScore = Number.NEGATIVE_INFINITY;
@@ -289,6 +331,14 @@ function assignMains(input: {
       const target = PROTEIN_TARGET[candidate.mainProtein] ?? 0;
       const remaining = target - (placed[candidate.mainProtein] ?? 0);
       score += remaining > 0 ? 30 + remaining * 5 : -25;
+
+      /* 和洋中の目安。設定の比率で7日を割り振った数に寄せる。
+         「その他」は比率を持たないので、寄せも罰もしない。 */
+      const catTarget = categoryGoal[candidate.category];
+      if (catTarget !== undefined) {
+        const left = catTarget - (placedCategory[candidate.category] ?? 0);
+        score += left > 0 ? CATEGORY_BONUS : CATEGORY_PENALTY;
+      }
 
       if (previous && candidate.category === previous.category) score -= 20;
       if (previous && candidate.method === previous.method) score -= 15;
@@ -311,6 +361,21 @@ function assignMains(input: {
 
     day.mainId = best?.id ?? null;
   }
+}
+
+function countCategories(
+  days: readonly PlanDay[],
+  byId: (id: string | null) => PlannerRecipe | null,
+  exclude: PlanDay,
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const day of days) {
+    if (day === exclude) continue;
+    const main = byId(day.mainId);
+    if (!main) continue;
+    counts[main.category] = (counts[main.category] ?? 0) + 1;
+  }
+  return counts;
 }
 
 function countProteins(

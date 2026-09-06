@@ -30,6 +30,9 @@ export type PlannerSettings = {
   weekdayMaxMinutes: number;
   /* null は「制限なし」（仕様書 3.2）。 */
   weekendMaxMinutes: number | null;
+  /* 和洋中の比率（設定の ratio_washoku など）。
+     7日をこの比で割り振る目安にする。合計が0なら見ない（変更記録 3.32）。 */
+  categoryRatio: { washoku: number; yoshoku: number; chuka: number };
 };
 
 /* 前の週までに使った主菜。同じ主菜を空ける判定に使う（7.1）。 */
@@ -82,7 +85,10 @@ export type Violation =
      制約違反ではないが、黙って条件を変えたことは伝える。
      need は、縮めずに済ませるために主菜があと何件あればよかったか。
      「縮めました」だけでは何をすればよいか分からないため（変更記録 3.31）。 */
-  | { kind: "repeat_gap_relaxed"; from: number; to: number; need: number };
+  | { kind: "repeat_gap_relaxed"; from: number; to: number; need: number }
+  /* 和洋中の比率どおりに出すには、そのカテゴリのレシピが足りない。
+     制約違反ではなく、設定に在庫が追いついていないという知らせ（3.32）。 */
+  | { kind: "category_short"; category: string; have: number; want: number };
 
 export type GeneratedPlan = {
   weekStart: string;
