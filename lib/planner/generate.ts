@@ -137,6 +137,9 @@ export function generateWeek(input: {
      縮めたことは violations に載せて画面に出す（黙って変えない）。 */
   let effectiveGap = settings.repeatGapDays;
   let mains = poolWithGap(effectiveGap);
+  /* 縮めずに済ませるには、主菜があと何件あればよかったか。
+     履歴で外れる分は増やしようがないので、足りない数がそのまま答えになる。 */
+  const need = Math.max(0, MIN_MAIN_POOL - mains.length);
   while (mains.length < MIN_MAIN_POOL && effectiveGap > 0) {
     effectiveGap -= 1;
     mains = poolWithGap(effectiveGap);
@@ -150,6 +153,7 @@ export function generateWeek(input: {
             kind: "repeat_gap_relaxed",
             from: settings.repeatGapDays,
             to: effectiveGap,
+            need,
           },
         ];
 

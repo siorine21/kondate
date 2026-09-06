@@ -22,7 +22,10 @@ function describe(violation: Violation): string {
     case "cook_time_over":
       return `調理時間が上限（${violation.limit}分）を超える日があります`;
     case "repeat_gap_relaxed":
-      return `レシピが少ないため、同じ主菜を空ける日数を${violation.from}日から${violation.to}日に縮めました`;
+      return (
+        `同じ主菜を空ける日数を${violation.from}日から${violation.to}日に縮めました。` +
+        `主菜をあと${violation.need}件登録すると、${violation.from}日空けられます`
+      );
   }
 }
 

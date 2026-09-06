@@ -79,8 +79,10 @@ export type Violation =
   | { kind: "allergy_included"; date: string; recipeId: string }
   | { kind: "cook_time_over"; date: string; recipeId: string; limit: number }
   /* 登録が少なく、同じ主菜を空ける日数を縮めたときに出す。
-     制約違反ではないが、黙って条件を変えたことは伝える。 */
-  | { kind: "repeat_gap_relaxed"; from: number; to: number };
+     制約違反ではないが、黙って条件を変えたことは伝える。
+     need は、縮めずに済ませるために主菜があと何件あればよかったか。
+     「縮めました」だけでは何をすればよいか分からないため（変更記録 3.31）。 */
+  | { kind: "repeat_gap_relaxed"; from: number; to: number; need: number };
 
 export type GeneratedPlan = {
   weekStart: string;

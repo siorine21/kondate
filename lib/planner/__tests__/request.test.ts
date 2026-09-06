@@ -144,3 +144,72 @@ test("差し替えでもリクエストは引き継がれる", () => {
   const next = after.plan.days.find((d) => d.date === day.date);
   assert.equal(next?.mainId, target.id);
 });
+
+test("縮めたときは、あと何件あればよかったかを添える", () => {
+  /* 主菜12件で、先週7日ぶん使った状態を作る。
+     21日（3週間）空けようとすると候補が尽きる。 */
+  const history = mains.slice(0, 7).map((recipe, i) => ({
+    recipeId: recipe.id,
+    date: `2026-08-${16 + i}`,
+  }));
+
+  const result = generateWeek({
+    weekStart: SUNDAY,
+    recipes,
+    settings: { ...defaultSettings, repeatGapDays: 21 },
+    history,
+    seed: 5,
+  });
+  if (!result.ok) throw new Error("献立を作れなかった");
+
+  const relaxed = result.plan.violations.find(
+    (violation) => violation.kind === "repeat_gap_relaxed",
+  );
+  if (relaxed?.kind !== "repeat_gap_relaxed") {
+    throw new Error("縮めたのに、そのことが出ていない");
+  }
+
+  assert.equal(relaxed.from, 21);
+  assert.ok(relaxed.to < 21, "縮めた先が元より短い");
+  assert.ok(relaxed.need > 0, "あと何件要るかが入っている");
+
+  /* 数が合っているか。7件使ったので候補は 12 − 7 = 5 件。
+     10件に届かせるには、あと5件。 */
+  const usable = mains.filter((recipe) => !history.some((h) => h.recipeId === recipe.id));
+  assert.equal(relaxed.need, Math.max(0, 10 - usable.length));
+});
+
+test("主菜が足りていれば縮めず、その旨も出さない", () => {
+  const result = generateWeek({
+    weekStart: SUNDAY,
+    recipes,
+    settings: { ...defaultSettings, repeatGapDays: 21 },
+    seed: 5,
+  });
+  if (!result.ok) throw new Error("献立を作れなかった");
+  assert.deepEqual(
+    result.plan.violations.filter((v) => v.kind === "repeat_gap_relaxed"),
+    [],
+  );
+});
+
+test("手で選んだ日は、組み直しで上書きされない", () => {
+  /* 3週間以内に作ったものを手で選び直しても、その日は動かない。
+     locked な日は組み直しの対象から外れる。 */
+  const target = mains[0];
+  const history = [{ recipeId: target.id, date: "2026-08-20" }]; // 3日前
+
+  const result = generateWeek({
+    weekStart: SUNDAY,
+    recipes,
+    settings: { ...defaultSettings, repeatGapDays: 21 },
+    history,
+    request: { fixedDays: [{ date: SUNDAY, recipeId: target.id }] },
+    seed: 5,
+  });
+  if (!result.ok) throw new Error("献立を作れなかった");
+
+  const day = result.plan.days.find((d) => d.date === SUNDAY);
+  assert.equal(day?.mainId, target.id, "手で選んだ主菜がそのまま残る");
+  assert.equal(day?.locked, true);
+});
