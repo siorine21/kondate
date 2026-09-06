@@ -9,13 +9,14 @@ import { guessShopCategory, normalizeUnit } from "@/lib/guess-shop";
 import type { MasterEntry } from "@/lib/guess-shop";
 import {
   SHOP_CATEGORY_LABEL,
+  formatNumber,
   formatQuantity,
   quantityStep,
 } from "@/lib/labels";
 import { weekStartOf } from "@/lib/plan-mapping";
 import { SHOP_CATEGORY_ORDER } from "@/lib/shop-order";
 import { createClient } from "@/lib/supabase/client";
-import type { ShopCategory } from "@/lib/supabase/types";
+import type { ItemSource, ShopCategory } from "@/lib/supabase/types";
 
 /* 買い物リスト（仕様書 5.2-6 / 9章）。
 
@@ -37,6 +38,8 @@ type Item = {
   is_extra: boolean;
   /* 前の週から引き継いだ品の、元の週の週頭（変更記録 3.25）。 */
   carried_from: string | null;
+  /* 何のレシピに使うかの内訳（変更記録 3.35）。 */
+  sources: ItemSource[];
   sort_order: number;
 };
 
@@ -121,6 +124,7 @@ export default function ShoppingPage() {
         purchased_at: row.purchased_at ?? null,
         is_extra: row.is_extra ?? false,
         carried_from: row.carried_from ?? null,
+        sources: row.sources ?? [],
       })),
     );
 
@@ -628,6 +632,11 @@ export default function ShoppingPage() {
                             </span>
                           ) : null}
                         </span>
+                        {/* かごに入れたら内訳は畳む。
+                            もう「何に使うか」は要らないし、行も伸びない。 */}
+                        {item.checked ? null : (
+                          <SourceLine sources={item.sources} />
+                        )}
                         {item.checked && item.checked_by ? (
                           <span className="mt-[2px] block text-[10.5px] text-ink-3">
                             {names[item.checked_by] ?? "だれか"}がかごに入れました
@@ -744,6 +753,31 @@ export default function ShoppingPage() {
         </div>
       ) : null}
     </main>
+  );
+}
+
+/* 何のレシピに使うか（変更記録 3.35）。
+
+   店で見るものなので、縦に伸ばさない。小さな字で1行に流し、
+   入りきらなければ折り返して段が増えるだけにする。
+   料理が1つしかないときは、行の数量とそのまま同じなので名前だけ出す。 */
+function SourceLine({ sources }: { sources: readonly ItemSource[] }) {
+  if (sources.length === 0) return null;
+  const single = sources.length === 1;
+
+  return (
+    <span className="mt-[3px] flex flex-wrap items-baseline gap-x-2 gap-y-[1px] text-[10.5px] leading-[1.4] text-ink-3">
+      {sources.map((source) => (
+        <span key={source.recipeId}>
+          {source.name}
+          {single || source.qty === null ? null : (
+            <span className="ml-1 font-mono text-[10px] text-ink-3/80">
+              {formatNumber(source.qty)}
+            </span>
+          )}
+        </span>
+      ))}
+    </span>
   );
 }
 

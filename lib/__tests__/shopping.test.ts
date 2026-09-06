@@ -9,6 +9,7 @@ import { buildShoppingList, type MasterEntry, type SourceRecipe } from "../shopp
 const recipes: SourceRecipe[] = [
   {
     id: "a",
+    name: "料理a",
     servings: 2,
     ingredients: [
       { name: "玉ねぎ", qty: 1, unit: "個", shopCategory: "produce" },
@@ -19,6 +20,7 @@ const recipes: SourceRecipe[] = [
   },
   {
     id: "b",
+    name: "料理b",
     servings: 2,
     ingredients: [
       { name: "たまねぎ", qty: 0.5, unit: "個", shopCategory: "produce" },
@@ -129,4 +131,52 @@ test("献立に無いレシピは無視する", () => {
   const items = build({ usedRecipeIds: ["a", "存在しない"] });
   assert.ok(items.length > 0);
   assert.ok(items.every((item) => item.name !== "にんにく"));
+});
+
+/* 何のレシピに使うかの内訳（変更記録 3.35）。
+   合計と同じ場所で作るので、内訳を足すと合計に一致することが要。 */
+
+test("内訳は名寄せしたあとの行に、料理ごとに並ぶ", () => {
+  const onion = build().find((item) => item.name === "玉ねぎ");
+  assert.ok(onion);
+  assert.deepEqual(
+    onion.sources.map((source) => `${source.name} ${source.qty}`),
+    ["料理a 1", "料理b 0.5"],
+  );
+  assert.equal(
+    onion.sources.reduce((sum, source) => sum + (source.qty ?? 0), 0),
+    onion.totalQty,
+    "内訳の合計が行の合計と食い違っている",
+  );
+});
+
+test("同じ料理が週に2回出たら、内訳は1件にまとめて足す", () => {
+  const items = build({ usedRecipeIds: ["a", "a"] });
+  const onion = items.find((item) => item.name === "玉ねぎ");
+  assert.ok(onion);
+  assert.equal(onion.totalQty, 2);
+  assert.equal(onion.sources.length, 1, "同じ料理が2行に分かれている");
+  assert.equal(onion.sources[0].qty, 2);
+});
+
+test("世帯人数に換算した分量が内訳にも入る", () => {
+  /* 2人前のレシピを4人分作る。 */
+  const items = build({ usedRecipeIds: ["a"], householdServings: 4 });
+  const onion = items.find((item) => item.name === "玉ねぎ");
+  assert.ok(onion);
+  assert.equal(onion.sources[0].qty, 2, "内訳だけ換算されていない");
+});
+
+test("分量のない材料は、内訳でも分量なしのまま", () => {
+  const items = buildShoppingList({
+    usedRecipeIds: ["a"],
+    recipes,
+    master: [],
+    householdServings: 2,
+    includeSeasoning: true,
+  });
+  const salt = items.find((item) => item.name === "塩");
+  assert.ok(salt);
+  assert.equal(salt.totalQty, null);
+  assert.deepEqual(salt.sources, [{ recipeId: "a", name: "料理a", qty: null }]);
 });

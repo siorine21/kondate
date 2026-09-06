@@ -127,6 +127,14 @@ type PlanRequestRow = {
   created_at: string;
 };
 
+/* 買い物リストの1品が、どの料理に、いくつ要るか（変更記録 3.35）。
+   shopping_items.sources に jsonb で入る。列の中身なのでここに置く。 */
+export type ItemSource = {
+  recipeId: string;
+  name: string;
+  qty: number | null;
+};
+
 type ShoppingItemRow = {
   id: string;
   plan_id: string;
@@ -146,6 +154,9 @@ type ShoppingItemRow = {
   carried_from: string | null;
   /* 数量を手で直したしるし。確定のたびに上書きしない（3.25）。 */
   qty_edited: boolean;
+  /* 何のレシピに使うかの内訳（3.35）。献立から作り直すので、
+     手で足した品と引き継いだ品では空のまま。 */
+  sources: ItemSource[];
   sort_order: number;
 };
 

@@ -40,6 +40,10 @@ import { Violations } from "./violations";
    組むのは lib/planner の純粋関数。この画面は入出力だけを見る。
    AI は使わない（2.2-5）。 */
 
+/* 内訳の列（supabase/setup/14_shopping_sources.sql）がまだ無いとき。
+   内訳だけ諦めて、買い物リストそのものは作る（変更記録 3.35）。 */
+const missingSources = (message: string) => message.includes("sources");
+
 /* まだ献立に入っていないリクエスト。名前は表示に使う。 */
 export type OpenRequest = {
   id: string;
@@ -132,6 +136,7 @@ export default function WeekPage() {
 
     const sourceRecipes: SourceRecipe[] = (recipeRows ?? []).map((recipe) => ({
       id: recipe.id,
+      name: recipe.name,
       servings: recipe.servings,
       ingredients: (ingredientRows ?? [])
         .filter((row) => row.recipe_id === recipe.id)
@@ -355,6 +360,7 @@ export default function WeekPage() {
         isExtra: row.is_extra ?? false,
         carriedFrom: row.carried_from ?? null,
         qtyEdited: row.qty_edited ?? false,
+        sources: row.sources ?? [],
       })),
       target: list,
     });
@@ -368,27 +374,50 @@ export default function WeekPage() {
     }
 
     for (const update of merge.updates) {
+      const qty = "totalQty" in update ? { total_qty: update.totalQty } : {};
       const { error: updateError } = await supabase
         .from("shopping_items")
-        .update({ total_qty: update.totalQty })
+        .update({ ...qty, sources: update.sources })
         .eq("id", update.id);
-      if (updateError) throw new Error("保存できませんでした");
+
+      if (!updateError) continue;
+      if (!missingSources(updateError.message)) {
+        throw new Error("保存できませんでした");
+      }
+      /* 内訳の列がまだ無い。数量だけ直して先へ進む。 */
+      if (!("total_qty" in qty)) continue;
+      const retry = await supabase
+        .from("shopping_items")
+        .update(qty)
+        .eq("id", update.id);
+      if (retry.error) throw new Error("保存できませんでした");
     }
 
     if (merge.inserts.length > 0) {
+      const rows = merge.inserts.map((item) => ({
+        plan_id: planRow.id,
+        name: item.name,
+        total_qty: item.totalQty,
+        unit: item.unit,
+        shop_category: item.shopCategory,
+        sort_order: item.sortOrder,
+      }));
+
       const { error: insertError } = await supabase
         .from("shopping_items")
-        .insert(
-          merge.inserts.map((item) => ({
-            plan_id: planRow.id,
-            name: item.name,
-            total_qty: item.totalQty,
-            unit: item.unit,
-            shop_category: item.shopCategory,
-            sort_order: item.sortOrder,
-          })),
-        );
-      if (insertError) throw new Error("保存できませんでした");
+        .insert(rows.map((row, index) => ({
+          ...row,
+          sources: merge.inserts[index].sources,
+        })));
+
+      if (insertError) {
+        if (!missingSources(insertError.message)) {
+          throw new Error("保存できませんでした");
+        }
+        /* 内訳の列がまだ無い。買い物リストは内訳なしで作る。 */
+        const retry = await supabase.from("shopping_items").insert(rows);
+        if (retry.error) throw new Error("保存できませんでした");
+      }
     }
   }
 

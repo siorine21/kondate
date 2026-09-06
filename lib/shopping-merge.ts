@@ -1,4 +1,4 @@
-import type { ShoppingItem } from "./shopping.ts";
+import type { ItemSource, ShoppingItem } from "./shopping.ts";
 
 /* 買い物リストの差分更新（変更記録 3.25）。
 
@@ -23,18 +23,29 @@ export type ExistingRow = {
   carriedFrom: string | null;
   /* 数量を手で直した（3.25）。 */
   qtyEdited: boolean;
+  /* 何のレシピに使うかの内訳（3.35）。 */
+  sources: ItemSource[];
 };
 
 export type MergePlan = {
   /* 新しく足す品。数量は「まだ買っていない分」。 */
   inserts: ShoppingItem[];
-  /* 数量だけ直す行。 */
-  updates: { id: string; totalQty: number | null }[];
+  /* 直す行。totalQty は変わらないなら省く（手で直した行は上書きしない）。
+     内訳（sources）は献立から作り直すので、変わっていれば必ず直す。 */
+  updates: {
+    id: string;
+    totalQty?: number | null;
+    sources: ItemSource[];
+  }[];
   /* 消す行。まだ手を付けていないものだけ。 */
   deletes: string[];
 };
 
 const keyOf = (name: string, unit: string | null) => `${name} ${unit ?? ""}`;
+
+/* 内訳が変わったか。作る順は献立の順で決まるので、並びも含めて比べてよい。 */
+const changedSources = (a: readonly ItemSource[], b: readonly ItemSource[]) =>
+  JSON.stringify(a) !== JSON.stringify(b);
 
 /* 献立に紐づかない行は、差分更新で触らない。
    手で足した品と、前の週から引き継いだ品。 */
@@ -82,8 +93,14 @@ export function mergeShoppingList(input: {
     }
 
     /* 数量を手で直した行は、数量を上書きしない。
-       「今週は多めに買う」という意図を確定のたびに消さないため。 */
-    if (keep?.qtyEdited) continue;
+       「今週は多めに買う」という意図を確定のたびに消さないため。
+       内訳は献立から作るものなので、こちらは新しくする。 */
+    if (keep?.qtyEdited) {
+      if (changedSources(keep.sources, item.sources)) {
+        plan.updates.push({ id: keep.id, sources: item.sources });
+      }
+      continue;
+    }
 
     const remaining = remainingQty(item.totalQty, done);
 
@@ -93,8 +110,14 @@ export function mergeShoppingList(input: {
     }
 
     if (keep) {
-      if (keep.totalQty !== remaining) {
-        plan.updates.push({ id: keep.id, totalQty: remaining });
+      const qtyMoved = keep.totalQty !== remaining;
+      const sourcesMoved = changedSources(keep.sources, item.sources);
+      if (qtyMoved || sourcesMoved) {
+        plan.updates.push({
+          id: keep.id,
+          ...(qtyMoved ? { totalQty: remaining } : {}),
+          sources: item.sources,
+        });
       }
     } else {
       plan.inserts.push({ ...item, totalQty: remaining });

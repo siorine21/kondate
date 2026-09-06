@@ -21,6 +21,7 @@ const row = (over: Partial<ExistingRow> = {}): ExistingRow => ({
   isExtra: false,
   carriedFrom: null,
   qtyEdited: false,
+  sources: [],
   ...over,
 });
 
@@ -29,6 +30,7 @@ const item = (over: Partial<ShoppingItem> = {}): ShoppingItem => ({
   totalQty: 2,
   unit: "個",
   shopCategory: "produce",
+  sources: [],
   sortOrder: 0,
   ...over,
 });
@@ -41,7 +43,7 @@ test("何も変わっていなければ、何も動かさない", () => {
 test("献立で増えた分だけ数量を直す", () => {
   const existing = [row({ id: "a", totalQty: 2 })];
   const plan = mergeShoppingList({ existing, target: [item({ totalQty: 3 })] });
-  assert.deepEqual(plan.updates, [{ id: "a", totalQty: 3 }]);
+  assert.deepEqual(plan.updates, [{ id: "a", totalQty: 3, sources: [] }]);
   assert.deepEqual(plan.inserts, []);
   assert.deepEqual(plan.deletes, []);
 });
@@ -195,4 +197,42 @@ test("日曜から水曜までの一連の流れ", () => {
     .map((i) => `${i.name} ${i.totalQty}`)
     .sort((a, b) => a.localeCompare(b, "ja"));
   assert.deepEqual(added, ["玉ねぎ 1", "木綿豆腐 1"], "足りない分だけが並ぶ");
+});
+
+/* 内訳（変更記録 3.35）。献立から作り直すものなので、
+   数量を手で直した行でも内訳だけは新しくする。 */
+
+const source = (name: string, qty: number | null) => ({
+  recipeId: name,
+  name,
+  qty,
+});
+
+test("数量が同じでも、内訳が変われば直す", () => {
+  const existing = [row({ id: "a", sources: [source("生姜焼き", 2)] })];
+  const plan = mergeShoppingList({
+    existing,
+    target: [item({ sources: [source("カレー", 2)] })],
+  });
+  assert.deepEqual(plan.updates, [
+    { id: "a", sources: [source("カレー", 2)] },
+  ]);
+});
+
+test("数量を手で直した行でも、内訳は新しくする", () => {
+  const existing = [
+    row({ id: "a", totalQty: 5, qtyEdited: true, sources: [] }),
+  ];
+  const plan = mergeShoppingList({
+    existing,
+    target: [item({ totalQty: 2, sources: [source("カレー", 2)] })],
+  });
+  assert.deepEqual(plan.updates, [
+    { id: "a", sources: [source("カレー", 2)] },
+  ]);
+  assert.equal(
+    "totalQty" in plan.updates[0],
+    false,
+    "手で直した数量を上書きしている",
+  );
 });
