@@ -10,6 +10,7 @@ import {
   PROTEIN_LABEL,
 } from "@/lib/labels";
 import { formatDay } from "@/lib/plan-mapping";
+import { withOrigin } from "@/lib/nav";
 import type { GeneratedPlan, PlanDay, PlannerRecipe } from "@/lib/planner";
 import type { EntryType } from "@/lib/supabase/types";
 
@@ -198,7 +199,7 @@ function DayCard({
           <>
             <Link
               className="mt-1.5 block text-[15.5px] font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-              href={`/recipe/?id=${main.id}`}
+              href={withOrigin(`/recipe/?id=${main.id}`, "week")}
             >
               {main.name}
             </Link>
@@ -337,7 +338,7 @@ function DishLink({
   return (
     <Link
       className="inline-block py-1 underline decoration-line underline-offset-[3px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-      href={`/recipe/?id=${dish.id}`}
+      href={withOrigin(`/recipe/?id=${dish.id}`, "week")}
     >
       {dish.name}
     </Link>

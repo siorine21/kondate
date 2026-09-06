@@ -110,7 +110,7 @@ export default function NutritionPage() {
   return (
     <main className="mx-auto w-full max-w-[430px] px-5 pb-16">
       <div className="pt-2">
-        <BackLink href="/week/">週間献立</BackLink>
+        <BackLink fallback="today" />
       </div>
 
       <p className="mt-3 font-mono text-[9.5px] tracking-[0.24em] text-ink-3">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { PROTEIN_BG, PROTEIN_LABEL } from "@/lib/labels";
+import { withOrigin } from "@/lib/nav";
 import { addDays, formatDay, itemsToPlan, toPlannerRecipe, weekStartOf } from "@/lib/plan-mapping";
 import type { PlanDay, PlannerRecipe } from "@/lib/planner";
 import { createClient } from "@/lib/supabase/client";
@@ -276,7 +277,7 @@ function TodayCard({
         <div className="min-w-0 flex-1 p-4">
           <Link
             className="block text-[19px] font-medium leading-[1.5] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-            href={`/recipe/?id=${main.id}`}
+            href={withOrigin(`/recipe/?id=${main.id}`, "today")}
           >
             {main.name}
           </Link>
@@ -317,7 +318,7 @@ function SideRow({
       {dish ? (
         <Link
           className="min-w-0 flex-1 py-1.5 text-[13.5px] text-ink underline decoration-line underline-offset-[3px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-          href={`/recipe/?id=${dish.id}`}
+          href={withOrigin(`/recipe/?id=${dish.id}`, "today")}
         >
           {dish.name}
         </Link>
@@ -356,7 +357,7 @@ function TomorrowCard({
       </p>
       <Link
         className="mt-1.5 block text-[14.5px] font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-        href={`/recipe/?id=${main.id}`}
+        href={withOrigin(`/recipe/?id=${main.id}`, "today")}
       >
         {main.name}
       </Link>

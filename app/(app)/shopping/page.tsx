@@ -440,7 +440,7 @@ export default function ShoppingPage() {
 
   return (
     <main className="mx-auto w-full max-w-[430px] px-5 pb-28">
-      <BackLink href="/week/">週間献立</BackLink>
+      <BackLink fallback="today" />
 
       <header className="pb-2">
         <p className="font-mono text-[9.5px] tracking-[0.2em] text-ink-3">

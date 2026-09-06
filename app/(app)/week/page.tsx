@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { BackLink } from "@/app/(app)/back-link";
+import { withOrigin } from "@/lib/nav";
 import { carryOver } from "@/app/(app)/carry-over";
 import { evaluateWeek, unmetTags } from "@/lib/nutrition";
 import {
@@ -565,7 +566,7 @@ export default function WeekPage() {
 
   return (
     <main className="mx-auto w-full max-w-[430px] px-5 pb-24">
-      <BackLink href="/">今日の献立</BackLink>
+      <BackLink fallback="today" />
 
       <header className="pb-2">
         <p className="font-mono text-[9.5px] tracking-[0.2em] text-ink-3">
@@ -650,13 +651,13 @@ export default function WeekPage() {
               <div className="mt-2 flex gap-2">
                 <Link
                   className="flex min-h-[40px] flex-1 items-center justify-center whitespace-nowrap rounded-[9px] border border-line px-3 text-[12.5px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-                  href="/nutrition/"
+                  href={withOrigin("/nutrition/", "week")}
                 >
                   栄養サマリ
                 </Link>
                 <Link
                   className="flex min-h-[40px] flex-1 items-center justify-center whitespace-nowrap rounded-[9px] border border-line px-3 text-[12.5px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-                  href="/shopping/"
+                  href={withOrigin("/shopping/", "week")}
                 >
                   買い物リスト
                 </Link>

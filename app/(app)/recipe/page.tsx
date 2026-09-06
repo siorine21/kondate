@@ -136,7 +136,7 @@ function RecipeDetail() {
   if (notFound) {
     return (
       <main className="mx-auto w-full max-w-[430px] px-5 pb-20">
-        <BackLink href="/recipes/">レシピ</BackLink>
+        <BackLink fallback="recipes" />
         <p className="mt-6 text-[13px] leading-[1.9] text-ink-2">
           レシピが見つかりません。一覧から選び直してください。
         </p>
@@ -155,7 +155,7 @@ function RecipeDetail() {
 
   return (
     <main className="mx-auto w-full max-w-[430px] px-5 pb-20">
-      <BackLink href="/recipes/">レシピ</BackLink>
+      <BackLink fallback="recipes" />
 
       <header className="pb-[18px]">
         <p className="font-mono text-[9.5px] tracking-[0.2em] text-ink-3">

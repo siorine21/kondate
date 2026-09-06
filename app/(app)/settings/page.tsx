@@ -83,7 +83,7 @@ export default function SettingsPage() {
 
   return (
     <main className="mx-auto w-full max-w-[430px] px-5 pb-20">
-      <BackLink href="/">今日の献立</BackLink>
+      <BackLink fallback="today" />
 
       <header className="pb-[6px]">
         <p className="font-mono text-[9.5px] tracking-[0.2em] text-ink-3">
