@@ -3,11 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { BackLink } from "@/app/(app)/back-link";
+import { toPlannerRecipe, toPlannerSettings } from "@/lib/plan-mapping";
+import type { PlannerRecipe, PlannerSettings } from "@/lib/planner";
 import { createClient } from "@/lib/supabase/client";
 
 import { RecipeForm } from "./recipe-form";
 import { RecipeGroups, type RecipeRow } from "./recipe-groups";
 import { SeedButton } from "./seed-button";
+import { StockSection } from "./stock";
 
 /* レシピ管理（仕様書 5.2-8）。
 
@@ -20,6 +23,11 @@ export default function RecipesPage() {
   const [unlinked, setUnlinked] = useState(false);
   /* 状態を問わない品名。はじめの20品の残りを数えるのに使う。 */
   const [knownNames, setKnownNames] = useState<string[] | null>(null);
+  /* 在庫を測るための、生成と同じ形のレシピと設定（変更記録 3.33）。 */
+  const [stock, setStock] = useState<{
+    recipes: PlannerRecipe[];
+    settings: PlannerSettings;
+  } | null>(null);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -36,6 +44,8 @@ export default function RecipesPage() {
       { data: profile },
       { data: rows, error: loadError },
       { data: allNames },
+      { data: household },
+      { data: ingredientRows },
     ] = await Promise.all([
         supabase
           .from("profiles")
@@ -52,6 +62,8 @@ export default function RecipesPage() {
            アーカイブした品を「まだ登録していない」と数えてしまう
            （変更記録 3.30）。 */
         supabase.from("recipes").select("name"),
+        supabase.from("households").select("*").maybeSingle(),
+        supabase.from("recipe_ingredients").select("recipe_id, name"),
       ]);
 
     if (loadError) {
@@ -65,6 +77,25 @@ export default function RecipesPage() {
     setHouseholdId(profile?.household_id ?? null);
     setRecipes(rows ?? []);
     setKnownNames((allNames ?? []).map((row) => row.name));
+
+    /* 在庫は「もう作らない」を除いた、いま使えるレシピで測る。
+       一覧に出ているものと同じ範囲にする。 */
+    if (household) {
+      const names = new Map<string, string[]>();
+      for (const row of ingredientRows ?? []) {
+        names.set(row.recipe_id, [...(names.get(row.recipe_id) ?? []), row.name]);
+      }
+      const { data: full } = await supabase
+        .from("recipes")
+        .select("*")
+        .eq("status", "active");
+      setStock({
+        recipes: (full ?? []).map((recipe) =>
+          toPlannerRecipe(recipe, names.get(recipe.id) ?? []),
+        ),
+        settings: toPlannerSettings(household),
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -100,6 +131,9 @@ export default function RecipesPage() {
       {householdId ? (
         <>
           <RecipeForm householdId={householdId} onSaved={load} />
+          {stock ? (
+            <StockSection recipes={stock.recipes} settings={stock.settings} />
+          ) : null}
           {knownNames ? (
             <SeedButton
               existingNames={knownNames}

@@ -21,7 +21,9 @@ import type {
    Supabase を import しない。入力は全て引数で受け取る（2.3）。 */
 
 /* 主菜のたんぱく源の目標配分（7.2）。合計7日分。 */
-const PROTEIN_TARGET: Readonly<Record<string, number>> = {
+/* 1週間ぶんの目標配分（7.2）。レシピ帳の在庫を測るときも同じ数を使う
+   （変更記録 3.33）。目標が2箇所にあると、片方だけ直す事故が起きる。 */
+export const PROTEIN_TARGET: Readonly<Record<string, number>> = {
   meat: 3,
   fish: 2,
   egg: 1,
@@ -52,7 +54,7 @@ const CATEGORY_BONUS = 30;
 const CATEGORY_PENALTY = -25;
 
 /* 主菜がこれを下回ると週を組めない（7.2-2）。 */
-const MIN_MAIN_POOL = 10;
+export const MIN_MAIN_POOL = 10;
 
 const FOOD_GROUPS = [1, 2, 3, 4, 5, 6];
 
@@ -342,6 +344,16 @@ function assignMains(input: {
 
       if (previous && candidate.category === previous.category) score -= 20;
       if (previous && candidate.method === previous.method) score -= 15;
+      /* 同じ肉が2日続かないようにする（変更記録 3.33）。
+         たんぱく源は同じ「肉」でも、鶏が続けば食卓は単調になる。
+         同じ調理法の連続と同じ重さにしてある。 */
+      if (
+        previous &&
+        candidate.meatKind !== null &&
+        candidate.meatKind === previous.meatKind
+      ) {
+        score -= 15;
+      }
 
       score += 20; // 上限内に収まっている
       score += (ratings[candidate.id] ?? 0) * 5;

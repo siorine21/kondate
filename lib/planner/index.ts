@@ -1,4 +1,9 @@
-export { generateWeek, weekDates } from "./generate.ts";
+export {
+  generateWeek,
+  weekDates,
+  MIN_MAIN_POOL,
+  PROTEIN_TARGET,
+} from "./generate.ts";
 export { rerollDay } from "./reroll.ts";
 export { validateWeek, isWeekend, cookTimeLimit } from "./constraints.ts";
 export { createRandom } from "./random.ts";

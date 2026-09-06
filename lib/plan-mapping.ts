@@ -4,6 +4,7 @@ import type {
   PlannerRecipe,
   PlannerSettings,
 } from "@/lib/planner";
+import { meatKindOf } from "@/lib/meat";
 import type { EntryType, Household, Recipe } from "@/lib/supabase/types";
 
 /* DB の行を、献立生成が受け取る形に直す。
@@ -24,6 +25,8 @@ export function toPlannerRecipe(
     foodGroups: recipe.food_groups,
     tags: recipe.tags,
     ingredientNames: [...ingredientNames],
+    /* 肉の種類は列を持たず、材料名から出す（変更記録 3.33）。 */
+    meatKind: meatKindOf(ingredientNames),
   };
 }
 

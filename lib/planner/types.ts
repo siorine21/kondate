@@ -1,3 +1,4 @@
+import type { MeatKind } from "@/lib/meat";
 import type {
   CookMethod,
   DishType,
@@ -21,6 +22,9 @@ export type PlannerRecipe = {
   tags: string[];
   /* アレルギー除外と、食材の使い切りの判定に使う。 */
   ingredientNames: string[];
+  /* 肉の種類（鶏・豚・牛など）。材料名から出す。肉が無ければ null。
+     同じ肉が続かないようにするために見る（変更記録 3.33）。 */
+  meatKind: MeatKind | null;
 };
 
 export type PlannerSettings = {
