@@ -72,12 +72,17 @@ export function InstallSection() {
         <div className="text-[12.5px] leading-[1.95] text-ink-2">
           <p className="font-medium text-ink">iPhone（Safari）</p>
           <p className="mt-1">
-            画面下の共有ボタン（□に↑）を押し、「ホーム画面に追加」を選びます。
+            画面下の共有ボタン（□に↑）を押し、
+            <span className="whitespace-nowrap">「ホーム画面に追加」</span>
+            を選びます。
           </p>
           <p className="mt-3 font-medium text-ink">Android（Chrome）</p>
           <p className="mt-1">
-            右上のメニュー（︙）を押し、「アプリをインストール」または
-            「ホーム画面に追加」を選びます。
+            右上のメニュー（︙）を押し、
+            <span className="whitespace-nowrap">「アプリをインストール」</span>
+            または
+            <span className="whitespace-nowrap">「ホーム画面に追加」</span>
+            を選びます。
           </p>
         </div>
       )}

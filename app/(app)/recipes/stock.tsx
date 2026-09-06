@@ -58,9 +58,15 @@ export function StockSection({
       </button>
 
       <p className="mt-2 text-[12px] leading-[1.8] text-ink-2">
-        {missing.length === 0
-          ? `同じ主菜を${settings.repeatGapDays}日空けるのに足りています。`
-          : `${missing.map((row) => row.label).join("・")}が足りません。`}
+        {/* 結びは切らない。長い並びのあとで「が足／りません。」になる（3.36）。 */}
+        {missing.length === 0 ? (
+          `同じ主菜を${settings.repeatGapDays}日空けるのに足りています。`
+        ) : (
+          <>
+            {missing.map((row) => row.label).join("・")}
+            <span className="whitespace-nowrap">が足りません。</span>
+          </>
+        )}
       </p>
 
       {open ? (

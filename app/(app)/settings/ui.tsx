@@ -39,8 +39,10 @@ export function Row({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-3 border-b border-line/60 py-3 last:border-0">
-      <span className="text-[13.5px] text-ink">{label}</span>
+    /* 見出しは折り返さない。入りきらないときは値のほうを次の行へ送る。
+       1行に詰めると「休日の調理時間の／上限」のような切れ方をする（3.36）。 */
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line/60 py-3 last:border-0">
+      <span className="whitespace-nowrap text-[13.5px] text-ink">{label}</span>
       <div className="ml-auto flex items-center gap-2">{children}</div>
     </div>
   );

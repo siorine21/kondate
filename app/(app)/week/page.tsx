@@ -641,22 +641,26 @@ export default function WeekPage() {
       ) : (
         <>
           {data.confirmed ? (
-            <div className="mt-3 flex items-center gap-3">
+            <div className="mt-3">
+              {/* 状態と行き先を1行に詰めると、狭い画面で
+                  「栄養サマ／リ」のような切れ方をする（変更記録 3.36）。 */}
               <p className="text-[12px] text-ok" role="status">
                 この内容で確定しています
               </p>
-              <Link
-                className="ml-auto min-h-[38px] rounded-[9px] border border-line px-3 py-2 text-[12px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-                href="/nutrition/"
-              >
-                栄養サマリ
-              </Link>
-              <Link
-                className="min-h-[38px] rounded-[9px] border border-line px-3 py-2 text-[12px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-                href="/shopping/"
-              >
-                買い物リスト
-              </Link>
+              <div className="mt-2 flex gap-2">
+                <Link
+                  className="flex min-h-[40px] flex-1 items-center justify-center whitespace-nowrap rounded-[9px] border border-line px-3 text-[12.5px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+                  href="/nutrition/"
+                >
+                  栄養サマリ
+                </Link>
+                <Link
+                  className="flex min-h-[40px] flex-1 items-center justify-center whitespace-nowrap rounded-[9px] border border-line px-3 text-[12.5px] text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+                  href="/shopping/"
+                >
+                  買い物リスト
+                </Link>
+              </div>
             </div>
           ) : null}
 

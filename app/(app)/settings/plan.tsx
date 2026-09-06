@@ -125,7 +125,8 @@ export function PlanSection({
         <div className="border-b border-line/60 py-3 last:border-0">
           <span className="text-[13.5px] text-ink">和洋中の比率</span>
           <p className="mt-1 text-[11.5px] leading-[1.8] text-ink-3">
-            7日をこの比で割り振ります。既定は 和4・洋1・中2 です。
+            7日をこの比で割り振ります。既定は{" "}
+            <span className="whitespace-nowrap">和4・洋1・中2 です。</span>
           </p>
           <div className="mt-2.5 flex gap-2">
             <RatioField
@@ -236,7 +237,7 @@ function NullableMinutes({
         value={value}
       />
       <button
-        className="min-h-[38px] px-1.5 font-mono text-[10px] tracking-[0.1em] text-ai focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+        className="min-h-[38px] whitespace-nowrap px-1.5 font-mono text-[10px] tracking-[0.1em] text-ai focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
         onClick={() => onChange(null)}
         type="button"
       >

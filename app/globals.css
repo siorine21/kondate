@@ -96,6 +96,18 @@ body {
   color: var(--ink);
   font-family: var(--font-zen), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+
+  /* 日本語の折り返し（変更記録 3.36）。
+     既定では文字と文字の間ならどこでも切れるので、
+     「栄養サマ／リ」「和4・洋1・中2 で／す。」のような切れ方をする。
+
+     auto-phrase は文節の切れ目で折り返す。
+     pretty は最後の行に1語だけ残るのを避ける。
+     どちらも対応していないブラウザでは無視され、
+     いままでどおりの折り返しに戻るだけなので、安全に足せる。 */
+  word-break: auto-phrase;
+  text-wrap: pretty;
+  line-break: strict;
 }
 
 /* キーボードで操作したときに、いまどこにいるかを必ず出す（仕様書 2.1）。
