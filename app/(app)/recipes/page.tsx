@@ -18,6 +18,8 @@ export default function RecipesPage() {
   const [recipes, setRecipes] = useState<RecipeRow[] | null>(null);
   const [householdId, setHouseholdId] = useState<string | null>(null);
   const [unlinked, setUnlinked] = useState(false);
+  /* 状態を問わない品名。はじめの20品の残りを数えるのに使う。 */
+  const [knownNames, setKnownNames] = useState<string[] | null>(null);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -30,8 +32,11 @@ export default function RecipesPage() {
     } = await supabase.auth.getSession();
     const userId = session?.user.id ?? "";
 
-    const [{ data: profile }, { data: rows, error: loadError }] =
-      await Promise.all([
+    const [
+      { data: profile },
+      { data: rows, error: loadError },
+      { data: allNames },
+    ] = await Promise.all([
         supabase
           .from("profiles")
           .select("household_id")
@@ -42,6 +47,11 @@ export default function RecipesPage() {
           .select("id, name, category, dish_type, main_protein, cook_time_min")
           .eq("status", "active")
           .order("created_at", { ascending: false }),
+        /* 「もう作らない」にした品も含めた品名。はじめの20品の残りを
+           数えるのに使う。一覧は active しか読まないので、これが無いと
+           アーカイブした品を「まだ登録していない」と数えてしまう
+           （変更記録 3.30）。 */
+        supabase.from("recipes").select("name"),
       ]);
 
     if (loadError) {
@@ -54,6 +64,7 @@ export default function RecipesPage() {
     setUnlinked(!profile);
     setHouseholdId(profile?.household_id ?? null);
     setRecipes(rows ?? []);
+    setKnownNames((allNames ?? []).map((row) => row.name));
   }, []);
 
   useEffect(() => {
@@ -89,9 +100,9 @@ export default function RecipesPage() {
       {householdId ? (
         <>
           <RecipeForm householdId={householdId} onSaved={load} />
-          {recipes ? (
+          {knownNames ? (
             <SeedButton
-              existingNames={recipes.map((r) => r.name)}
+              existingNames={knownNames}
               householdId={householdId}
               onSeeded={load}
             />

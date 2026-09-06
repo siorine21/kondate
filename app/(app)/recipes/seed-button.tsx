@@ -11,7 +11,8 @@ import { createClient } from "@/lib/supabase/client";
    仕様書は scripts/seed-recipes.ts で投入する想定だったが、この構成では
    サーバも実行環境も無い。ログイン中の画面から入れるのが唯一の経路になる。
 
-   20品がすべて揃ったらこのボタンは出なくなる。 */
+   20品が一度そろえば、そのあと「もう作らない」に外しても出てこない。
+   外したのは選んだ結果なので、また入れませんかと訊く筋合いがない。 */
 
 export function SeedButton({
   householdId,
@@ -19,6 +20,9 @@ export function SeedButton({
   onSeeded,
 }: {
   householdId: string;
+  /* 状態を問わない品名。「もう作らない」にした品も含める。
+     含めないと、外した品を「まだ登録していない」と数えてしまい、
+     押しても何も入らないボタンが残り続ける（変更記録 3.30）。 */
   existingNames: readonly string[];
   onSeeded: () => void;
 }) {
